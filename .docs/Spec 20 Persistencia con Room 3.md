@@ -359,6 +359,39 @@ Las firmas reutilizan los tipos que ya existen en el dominio: `ExerciseDeletion`
 
 Un objeto que todavía no se guardó lleva `id = 0` (y `exerciseId = 0` o `sessionId = 0` en sus hijos). El repositorio ignora esos valores al insertar y usa el id que asigna la base de datos (S20-R17).
 
+### Lecturas nuevas para las specs F
+
+Agregadas el 2026-10-11 por las Specs 40 y 42. Aplicado el 2026-10-11. Son requisitos de esta spec, pero no están implementados. Por S30-R17, cada una la agrega a su repositorio la spec F que la necesita, como contrato explícito, con su consulta, su prueba de DAO y su caso en la prueba de contrato del repositorio (Spec 31). Ninguna cambia el esquema ni sube `version`: usan los índices que ya existen. Los nombres son una guía; la spec F fija los definitivos.
+
+| ID | Requisito | Se implementa en |
+| --- | --- | --- |
+| S20-R48 | **¿Tiene series? (Spec 40, cambio 2).** `ExerciseRepository.observeHasSets(exerciseId: Long): Flow<Boolean>` emite si el ejercicio tiene al menos una serie y se actualiza cuando cambia. La consulta vive en `ExerciseDao` y usa `index_exercise_set_exercise_id_session_id`. Es la misma lectura cruzada que `countSetsOfExercise`. La decisión final de borrar o archivar sigue en la transacción de S20-R40. | F01 (editor, S40-F06) |
+| S20-R49 | **Última sesión de cada ejercicio con su peso más alto (Spec 42, D11).** `SessionRepository.observeLatestSessionPeaks(): Flow<List<...>>` devuelve, por cada ejercicio con series, el `id` y la fecha de su sesión más reciente según el orden de sesiones, contando hoy, y el mayor `weight_grams` de sus series en esa sesión (S10-R34). Es una sola consulta para todas las tarjetas, no una por ejercicio. Un ejercicio sin series no aparece y la tarjeta dice "Sin series". | F02 (tarjetas del inicio) |
+| S20-R50 | **Resumen del historial (Spec 40, cambio 3).** `SessionRepository.observeHistorySummary(): Flow<List<...>>` devuelve cada sesión en el orden de S10-R28, con sus ejercicios en el orden de su primera serie y el número de series de cada uno, en una sola consulta. Incluye las sesiones sin series. | F04 (historial) |
+
+Consulta guía para S20-R48:
+
+```sql
+SELECT EXISTS(SELECT 1 FROM exercise_set WHERE exercise_id = :exerciseId)
+```
+
+Consulta guía para S20-R49. No usa funciones de ventana, para no depender de la versión de SQLite:
+
+```sql
+SELECT s.exercise_id, ws.id AS session_id, ws.date, MAX(s.weight_grams) AS heaviest_weight_grams
+FROM exercise_set s
+JOIN workout_session ws ON ws.id = s.session_id
+WHERE ws.id = (
+    SELECT s2.session_id FROM exercise_set s2
+    JOIN workout_session ws2 ON ws2.id = s2.session_id
+    WHERE s2.exercise_id = s.exercise_id
+    ORDER BY ws2.date DESC, ws2.id DESC
+    LIMIT 1)
+GROUP BY s.exercise_id, ws.id
+```
+
+Para S20-R50, una fila por sesión y ejercicio (`LEFT JOIN` de `workout_session` con `exercise_set`, agrupada por sesión y ejercicio, con `MIN(set_order)` y `COUNT(*)`), ordenada por `date` y `id` descendentes y luego por `MIN(set_order)`. El repositorio agrupa las filas por sesión. F04 fija la consulta final.
+
 ## Migraciones
 
 | ID | Requisito |
@@ -479,6 +512,9 @@ Las pruebas de base de datos viven en `src/androidTest` (opción A). Las de mapp
 | S20-A38 | Cada repositorio implementa su interfaz y el `AppContainer` los expone con el tipo de la interfaz. | S20-R07, S20-R43 | Revisión de `AppContainer.kt` y compilación con `./gradlew assembleDebug` |
 | S20-A39 | Esta spec incluye la tabla de cumplimiento de S01-R06 a S01-R09. | S01-A05 | Revisión de esta spec |
 | S20-A40 | Build, pruebas unitarias y pruebas de base de datos pasan desde un clon limpio. | S03-R14, S20-R46, S20-R47 | `./gradlew assembleDebug test` y, con un dispositivo, `./gradlew assembleDebug test connectedDebugAndroidTest` (S31-R24) |
+| S20-A41 | `observeHasSets` emite `false` para un ejercicio sin series, `true` tras agregarle una y `false` tras borrarla. | S20-R48 | Prueba de DAO y prueba de contrato del repositorio, escritas por F01 |
+| S20-A42 | Con un ejercicio con series en dos sesiones del mismo día (60 kg y 62,5 kg en la de mayor `id`) y otro sin series, la lectura devuelve una fila con la sesión de mayor `id` y 62 500 g, y ninguna para el segundo. | S20-R49, S10-R34 | Prueba de DAO y prueba de contrato del repositorio, escritas por F02 |
+| S20-A43 | El resumen lista las sesiones por fecha e `id` descendentes, los ejercicios por su primera serie con su número de series, e incluye una sesión sin series. | S20-R50 | Prueba de DAO y prueba de contrato del repositorio, escritas por F04 |
 
 ## Hechos de la implementación
 
@@ -502,6 +538,7 @@ Todas cerradas por el dueño el 2026-10-10.
 - [x] **Interfaces de repositorio.** Decidido el 2026-10-10: `ExerciseRepository`, `SessionRepository` y `ExerciseWriteResult` se aprueban tal como se proponen.
 - [x] **Id de un objeto no guardado.** Decidido el 2026-10-10: `id = 0` significa que el objeto todavía no se guardó. La Spec 10 registra la convención.
 - [x] **Paquete de la base de datos y del contenedor.** Decidido el 2026-10-10: `WeightrackDatabase` y `Converters` en `com.juancholopes.weightrack.data`, y `AppContainer` y `WeightrackApplication` en el paquete raíz. La Spec 03 lo agrega a su esqueleto.
+- [x] **Lecturas nuevas para F01, F02 y F04.** Decidido el 2026-10-11 (el dueño aceptó de antemano las recomendaciones): S20-R48 a S20-R50 se documentan aquí y las implementan F01, F02 y F04 por S30-R17. Ninguna cambia el esquema. Aplicado el 2026-10-11.
 
 ## Cambios que esta spec pide a otras specs
 

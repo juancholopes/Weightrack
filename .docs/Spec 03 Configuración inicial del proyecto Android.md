@@ -72,7 +72,7 @@ Qué le toca a cada spec:
 
 | ID | Requisito |
 | --- | --- |
-| S03-R07 | `namespace` y `applicationId` son `com.juancholopes.weightrack`. |
+| S03-R07 | `namespace` y `applicationId` son `com.juancholopes.weightrack`. El build type `debug` agrega `applicationIdSuffix = ".debug"`, así que la build debug se instala como `com.juancholopes.weightrack.debug`, aparte de la release. El `namespace` y el paquete de código no cambian. *Cambiado el 2026-10-11 por la Spec 31 ("Riesgos abiertos"); se implementa en F00. Antes: un solo `applicationId`.* |
 | S03-R08 | El paquete de código coincide con el `namespace` elegido, incluidas las pruebas de `test`, `androidTest` y `testFixtures` (Spec 31). |
 | S03-R09 | La estructura de paquetes sigue el esqueleto de abajo. Esta spec lo documenta. Los paquetes se crean cuando la primera clase los necesita, no vacíos. |
 | S03-R10 | Se elimina el composable de plantilla `Greeting` y su preview. `MainActivity` muestra un contenido mínimo sin textos escritos en el código. |
@@ -88,7 +88,7 @@ com/juancholopes/weightrack/
   WeightrackApplication.kt  Application propia, crea el AppContainer (Spec 20)
   AppContainer.kt           inyección manual: construye la base de datos y los repositorios (Spec 20)
   data/                     base de datos y conversores compartidos por las features (Spec 20)
-  ui/                       shell de F00: composable raíz y navegación
+  ui/                       shell de F00: composable raíz, navegación y StartScreen temporal hasta F02
     theme/                  tema Material 3 compartido
   feature/
     catalog/                F01
@@ -98,7 +98,10 @@ com/juancholopes/weightrack/
     session/                F02: domain/, data/ y ui/
     lastperformance/        F03: solo ui/
     history/                F04: solo ui/
+    progress/               F05: solo ui/ (Spec 42, D12)
 ```
+
+El inicio de F02 vive en `feature/session/ui/home/` (Spec 42, D2). El manifiesto declara `android:enableOnBackInvokedCallback="true"` en `<application>`, con `tools:targetApi="33"`, para el atrás predictivo en API 33 a 35 (S42-R05; lo agrega F00). Agregado el 2026-10-11. Aplicado el 2026-10-11.
 
 Las pruebas usan los mismos paquetes en tres source sets (Spec 31): `src/test` (JVM), `src/androidTest` (dispositivo) y `src/testFixtures`, que comparten los dos anteriores. Los fakes y los contratos de los repositorios viven en `src/testFixtures`, paquete `testing` (S31-R04), y `MainDispatcherRule` en `src/test`, paquete `testing` (S31-R10).
 
@@ -123,7 +126,7 @@ Las pruebas usan los mismos paquetes en tres source sets (Spec 31): `src/test` (
 - Estrategia de pruebas y librerías nuevas de pruebas: Spec 31.
 - Formateo y análisis estático adicionales, por ejemplo ktlint o detekt: descartados por ahora (S03-R19). Se agregan después con un ADR.
 - Modularización en varios módulos Gradle.
-- Firma, ofuscación y publicación en Google Play.
+- Publicación en Google Play. *Cambiado el 2026-10-11:* la firma del APK de release la decide la Spec 01 ("Firma de los APK") y la implementa F00. La ofuscación ya la activa el bloque `optimization` de release.
 
 ## Criterios de aceptación
 
@@ -152,6 +155,7 @@ Las pruebas usan los mismos paquetes en tres source sets (Spec 31): `src/test` (
 - [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: KSP y el plugin `androidx.room3` se aplican en `:app` (S03-R06, S03-A04), el esqueleto suma `data/`, `AppContainer` y `WeightrackApplication`, y las pruebas de base de datos corren aparte con `./gradlew connectedAndroidTest` (S03-R14).
 - [x] **Respaldo automático de Android.** Decidido el 2026-10-10: `allowBackup="true"` se mantiene con las reglas por defecto. El respaldo del sistema a la cuenta de Google del usuario se acepta como excepción a S01-R05, que se refiere a funciones de la app (S03-R18).
 - [x] **Ajustes por la Spec 30.** Aprobado el 2026-10-11: el esqueleto de paquetes sigue el árbol de ADR-30-03, con los nombres de feature, el `ui/` raíz del shell y la composición de cada pantalla (S30-R05, S30-R06 y S30-R12).
+- [x] **Ajustes por las Specs 31 y 42.** Decidido el 2026-10-11 (el dueño aceptó de antemano las recomendaciones): S03-R07 suma `applicationIdSuffix = ".debug"` (Spec 31, "Riesgos abiertos"); el esqueleto suma `feature/progress/` (F05) y el inicio en `feature/session/ui/home/`; el manifiesto suma `enableOnBackInvokedCallback` (S42-R05). F00 implementa los tres. Aplicado el 2026-10-11.
 - [x] **Ajustes por la Spec 31.** Aprobado el 2026-10-11: S03-R14 y S03-A09 usan el comando sin dispositivo y el comando completo con `connectedDebugAndroidTest` (S31-R23, S31-R24); S03-R08 y el esqueleto incluyen `src/testFixtures`; las versiones de las librerías de prueba quedan verificadas en "Estado actual".
 
 ## Fuentes

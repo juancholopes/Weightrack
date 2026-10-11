@@ -43,6 +43,8 @@ Los términos de la primera versión cubren las features F00 a F04 de la Spec 01
 | Repeticiones | Cuántas veces se ejecutó el movimiento en una serie. Es un número entero mayor que 0. | `reps` | Ejemplo: 10. |
 | Última vez | Todas las series de un ejercicio en la sesión más reciente que lo contiene, en el orden en que se registraron, mostradas al registrarlo de nuevo. | `LastPerformance` | Decidido el 2026-10-10. Lo implementa F03 y cumple S01-R03. Se calcula a partir de las series guardadas, no se guarda aparte. |
 | Evolución | Todas las series de un ejercicio con la fecha de su sesión, ordenadas en el tiempo. | `ExerciseEvolution` | Definido en la Spec 10. Es la consulta en la que se apoyan las gráficas de F05. |
+| Peso más alto | El mayor peso de las series de un ejercicio en una sesión. | `heaviestWeightGrams` | Lo define S10-R34. Es el número de la tarjeta del inicio (F02, sobre la sesión más reciente) y la altura de cada barra de F05. Agregado el 2026-10-11. |
+| Récord personal | Una sesión cuyo peso más alto supera al de todas las sesiones anteriores de ese ejercicio. La primera sesión no cuenta y un empate no es récord. | `isPersonalRecord` | Lo define S10-R35. Se muestra en F05 (S01-R12). Agregado el 2026-10-11. |
 | Historial | El conjunto de sesiones pasadas del usuario, que puede listar, ver, corregir y eliminar. | `SessionHistory` | Lo implementa F04 y cumple S01-R04. |
 | Nota | Un texto libre opcional que el usuario escribe. Hay solo dos tipos: la nota fija de un ejercicio y la nota de una sesión. | `Exercise.notes`, `WorkoutSession.notes` | Decidido el 2026-10-10. La nota del ejercicio la implementa F01 (ejemplo: "Asiento en la posición 4"). La nota de la sesión la implementa F02 (ejemplo: "Me sentí cansado"). No hay nota por serie ni nota del ejercicio dentro de una sesión. |
 
@@ -76,14 +78,14 @@ Cada fila lista palabras que no se usan en specs, código ni interfaz, y su reem
 
 | No usar | Usar | Motivo |
 | --- | --- | --- |
-| Máquina (como entidad aparte) | Ejercicio | Separarlos duplicaría el catálogo. "Máquina" solo aparece como valor del equipo de un ejercicio o dentro del nombre que el usuario le da. |
+| Máquina (como entidad aparte) | Ejercicio | Separarlos duplicaría el catálogo. "Máquina" solo aparece como valor del equipo de un ejercicio o dentro del nombre que el usuario le da. Por eso la pestaña del inicio con el catálogo se llama "Ejercicios" y no "Máquinas" (Spec 42, D3; anotado el 2026-10-11). |
 | Rutina (para hablar de lo que se hizo hoy) | Sesión | Una rutina es un plan futuro, no un entrenamiento registrado. |
 | Entreno, workout, entrenamiento (como entidad) | Sesión | Un solo nombre para el mismo concepto. "Sesión de entrenamiento" se acepta en prosa. |
 | Set (en specs e interfaz en español) | Serie | El término del dominio en español es "serie". |
 | `Set`, `Session` (como nombres de clase) | `ExerciseSet`, `WorkoutSession` | Chocan con `kotlin.collections.Set` y con el concepto de sesión de usuario. |
 | Carga, kilos, libras | Peso | "Peso" siempre en kilogramos. No hay libras en la primera versión. En peso corporal se dice "peso adicional". |
 | Peso (para el peso del cuerpo) | Medición corporal | "Peso" a secas es siempre el de una serie. |
-| Récord, máximo, último peso | Última vez | "Última vez" es el término de F03. Récords y máximos no están en el alcance. |
+| Récord (a secas), máximo, último peso | Última vez, peso más alto o récord personal | "Última vez" es el término de F03. En F05 se dicen "peso más alto" (de una sesión) y "récord personal", con el significado de la tabla de términos del dominio. "Máximo" y "récord" a secas siguen sin usarse. Cambiado el 2026-10-11 (Spec 42, D12). Antes: "Récords y máximos no están en el alcance". |
 | Registro, log, bitácora (para las sesiones pasadas) | Historial | "Registro" queda para el registro de fallos del agente. |
 | Lista de ejercicios, biblioteca | Catálogo | Un solo nombre para la lista que mantiene el usuario. |
 
@@ -116,3 +118,4 @@ Cada fila lista palabras que no se usan en specs, código ni interfaz, y su reem
 - [x] **Actualizar la Spec 01.** Hecho el 2026-10-10: la Spec 01 agrega S01-R10 y asigna la nota del ejercicio a F01 y la de la sesión a F02.
 - [x] **Alcance de "Última vez".** Decidido el 2026-10-10: todas las series del ejercicio en la sesión más reciente que lo contiene. Lo detalla la Spec 10 (S10-R25).
 - [x] **Nombre en código del peso.** Decidido el 2026-10-10: `weightGrams` reemplaza a `weightKg`, porque el peso se guarda como entero de gramos. La unidad visible sigue siendo el kilogramo.
+- [x] **Términos de F05 y pestaña "Ejercicios".** Aplicado el 2026-10-11 por la Spec 42 (D3 y D12): se agregan "peso más alto" y "récord personal" (S10-R34, S10-R35), y se anota por qué la pestaña se llama "Ejercicios". Decidido el 2026-10-11 (el dueño aceptó de antemano las recomendaciones).

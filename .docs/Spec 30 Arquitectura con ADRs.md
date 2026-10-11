@@ -152,7 +152,11 @@ F03 (última vez) no tiene datos propios: lee `SessionRepository.observeLastPerf
 - Nombres de feature: `catalog` (F01), `session` (F02), `lastperformance` (F03) y `history` (F04). Siguen la columna "Nombre en código" de la Spec 02 (`LastPerformance`, `SessionHistory`). F03 y F04 van en paquetes propios (D2).
 - F03 y F04 no tienen `data/`, porque no son dueñas de tablas (S01-R09). Usan el dominio de `session` y de `catalog`.
 - El shell de F00 (composable raíz y navegación) vive en el paquete raíz `ui/`, junto a `ui/theme/`, fuera de `feature/` (D3). El shell es la única pieza que conoce todas las features.
-- Las features forman un grafo sin ciclos: `catalog` ← `session` ← `lastperformance` y `history`.
+- Las features forman un grafo sin ciclos: `catalog` ← `session` ← `lastperformance`, `history` y `progress`.
+- Enmienda del 2026-10-11 (Spec 42, D2 y D12). Aplicado el 2026-10-11:
+  - `progress` (F05, estadísticas por ejercicio) es un paquete propio, sin `data/`. Puede importar `session.domain` y `catalog.domain`.
+  - El inicio (S42-P01) es de F02 y vive en `feature/session/ui/home/`. Cada pantalla de una feature puede ir en un subpaquete de su `ui/` (`home/`, `logger/`, `editor/`).
+  - La pantalla de arranque temporal de F00 (`StartScreen`, clave `StartKey`) vive en el shell, en `ui/`. F02 la borra al agregar el inicio.
 - F03 se muestra dentro de la pantalla de registro de F02 sin que `session` dependa de `lastperformance`: la pantalla de F02 declara en su spec un parámetro composable (un hueco) para la última vez, y el shell lo llena con el composable de F03. Si las Specs 40 a 42 deciden otra forma de mostrarla, este punto se ajusta allí.
 
 Ubicación del código:
@@ -163,7 +167,7 @@ com/juancholopes/weightrack/
   WeightrackApplication.kt      Application propia: crea el AppContainer
   AppContainer.kt               raíz de composición (ADR-30-04)
   data/                         WeightrackDatabase y Converters, compartidos (Spec 20)
-  ui/                           shell de F00: composable raíz y navegación (D3)
+  ui/                           shell de F00: composable raíz, navegación y StartScreen temporal (D3)
     theme/                      tema Material 3 compartido (Spec 41)
   feature/
     catalog/                    F01
@@ -174,9 +178,12 @@ com/juancholopes/weightrack/
       domain/                   modelos, reglas, SessionRepository y casos de uso compartidos con F04
       data/                     entidades, SessionDao, filas, mappers, RoomSessionRepository
       ui/
+        home/                   inicio con pestañas Hoy y Ejercicios (Spec 42, D2)
     lastperformance/            F03 (D2)
       ui/
     history/                    F04 (D2)
+      ui/
+    progress/                   F05 (Spec 42, D12)
       ui/
 ```
 
@@ -195,11 +202,11 @@ Las opciones para F03 y F04 y para el shell están en "Decisiones abiertas" (D2 
 | ID | Requisito |
 | --- | --- |
 | S30-R05 | El código sigue el árbol de "Ubicación del código" de este ADR. |
-| S30-R06 | Los paquetes de feature son `catalog` (F01), `session` (F02), `lastperformance` (F03) y `history` (F04), como decidió el dueño en D2. Una feature futura elige su nombre con el glosario y lo agrega a este ADR. |
+| S30-R06 | Los paquetes de feature son `catalog` (F01), `session` (F02), `lastperformance` (F03), `history` (F04) y `progress` (F05, agregado el 2026-10-11 por la Spec 42), como decidió el dueño en D2. Una feature futura elige su nombre con el glosario y lo agrega a este ADR. |
 | S30-R07 | Cada feature crea solo los subpaquetes `domain`, `data` y `ui` que usa, cuando la primera clase los necesita (S03-R09). Una feature tiene `data/` solo si es dueña de tablas (S01-R09). |
 | S30-R08 | El dominio sigue en `feature/catalog/domain` y `feature/session/domain`, como en la Spec 10. |
 | S30-R09 | Reglas entre capas: `domain` no importa `android.*`, `androidx.*` (S10-R16) ni ningún paquete `data` o `ui` de la app. `ui` importa `domain` y nunca importa paquetes `data` (de feature o de la raíz) ni `androidx.room3`. `data` implementa el `domain` de su feature. |
-| S30-R10 | Reglas entre features: `catalog` no importa ninguna otra feature. `session` puede importar `catalog.domain`, y `session.data` puede importar entidades y mappers de `catalog.data` solo para claves foráneas y filas de consulta. `lastperformance` y `history` pueden importar `session.domain` y `catalog.domain`. Ninguna feature importa el `ui` de otra: solo el shell importa los paquetes `ui` de las features. Una dependencia nueva entre features es un contrato explícito anotado en la spec F. |
+| S30-R10 | Reglas entre features: `catalog` no importa ninguna otra feature. `session` puede importar `catalog.domain`, y `session.data` puede importar entidades y mappers de `catalog.data` solo para claves foráneas y filas de consulta. `lastperformance`, `history` y `progress` pueden importar `session.domain` y `catalog.domain`. Ninguna feature importa el `ui` de otra: solo el shell importa los paquetes `ui` de las features. Una dependencia nueva entre features es un contrato explícito anotado en la spec F. |
 | S30-R11 | La app tiene una sola Activity, `MainActivity`, que llama a `enableEdgeToEdge()` (S03-R12) y muestra el composable raíz del shell. Todas las pantallas son composables; no hay Fragments. |
 | S30-R12 | Cada pantalla vive en `feature/<feature>/ui/` y se compone de `<Nombre>Screen` (composable de pantalla: obtiene el ViewModel, recolecta el estado y conecta los callbacks), `<Nombre>Content` (composable sin estado, ver S30-R31), `<Nombre>ViewModel` y `<Nombre>UiState`. Cumple la convención de la constitución: composable de pantalla, ViewModel y estado de UI inmutable. |
 
@@ -493,7 +500,7 @@ NavDisplay(
 | A. Navigation 3, 1.2.0 (elegida) | La pila es una lista que posee la app: encaja con el flujo unidireccional y se prueba fácil. ViewModel por entrada con `lifecycle-viewmodel-navigation3`. Es lo que piden las skills `navigation-3`, `adaptive` y `navigation-event`. Las Scenes permitirían list-detail en el futuro sin rehacer claves ni ViewModels | Biblioteca más joven y en plena evolución (1.3.0 en alfa). Pilas múltiples y resultados entre pantallas se arman con recetas, con código propio |
 | B. Navigation Compose 2.10.2 | Madura y muy documentada. `NavController` resuelve pilas múltiples y deep links | La página oficial la marca en modo mantenimiento, sin funciones nuevas. Contradice las skills (regla 9). La pila vive en `NavController`, fuera del estado de la app. Migrar después a Navigation 3 es un cambio atómico (guía de migración) |
 
-**Consecuencias.** Entran con F00 `navigation3-runtime`, `navigation3-ui`, `lifecycle-viewmodel-navigation3`, el plugin `org.jetbrains.kotlin.plugin.serialization`, y `kotlinx-serialization-core` pasa de `runtimeOnly` a `implementation` (ver "Dependencias"). Las tablets siguen fuera de alcance (Spec 01): no se agregan Scenes ni `material3-adaptive-navigation3` en la primera versión.
+**Consecuencias.** Entran con F00 `navigation3-runtime`, `navigation3-ui`, `lifecycle-viewmodel-navigation3` (y, desde el 2026-10-11, `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose` y `navigationevent-compose`), el plugin `org.jetbrains.kotlin.plugin.serialization`, y `kotlinx-serialization-core` pasa de `runtimeOnly` a `implementation` (ver "Dependencias"). Las tablets siguen fuera de alcance (Spec 01): no se agregan Scenes ni `material3-adaptive-navigation3` en la primera versión.
 
 | ID | Requisito |
 | --- | --- |
@@ -538,7 +545,7 @@ Lo que esta arquitectura deja listo para que otras specs decidan, sin decidirlo 
 - La pila de navegación es una lista que posee el shell, así que las pruebas de navegación que pide la skill `testing-setup` (atrás, salida por la pantalla inicial) se pueden escribir contra ella.
 - Dónde viven los fakes, si se usa Robolectric para pruebas de UI (lo sugiere la skill `testing-setup`; la Spec 20 solo lo descartó para la base de datos) y las capturas son decisiones de la Spec 31. Decididas el 2026-10-11: fakes en `src/testFixtures` (D4), sin Robolectric (D1) y sin capturas en la primera versión (D2).
 
-**Specs 40 a 42 (flujos, diseño y pantallas).**
+**Specs 40 a 42 (flujos, diseño y pantallas).** Resuelto el 2026-10-11 por la Spec 42. Aplicado el 2026-10-11: una sola pila con `rememberNavBackStack(HomeKey)` y pestañas dentro del inicio (S42-R02, D1); el inicio de F02 como pantalla inicial (S42-R03, D2), con `StartKey` en `ui/` hasta F02; atrás con `NavDisplay` y un solo `NavigationBackHandler` por pantalla (S42-R04 a S42-R06, D13); un `Scaffold` por pantalla (S42-R10); el hueco de la última vez como parámetro composable que llena el shell (S42-R16). Los puntos de abajo quedan como historia.
 
 - La Spec 42 decide pantallas, rutas, pantalla inicial y si hay una pila o varias pilas de nivel superior. Esta spec solo fija que el shell las posee (S30-R40).
 - Edge-to-edge: `MainActivity` mantiene `enableEdgeToEdge()` y el manifiesto `adjustResize`. La skill `edge-to-edge` pide aplicar los insets con un solo método y no poner padding al contenedor de un scaffold adaptable; la Spec 41 o 42 decide si cada pantalla tiene su `Scaffold`.
@@ -566,19 +573,22 @@ Aprobadas por el dueño con esta spec el 2026-10-11. Cada una entra con la spec 
 | `androidx.navigation3:navigation3-runtime` | 1.2.0 (23 de septiembre de 2026) | `implementation` | F00 | [Navigation 3 releases](https://developer.android.com/jetpack/androidx/releases/navigation3) |
 | `androidx.navigation3:navigation3-ui` | 1.2.0 | `implementation` | F00 | [Navigation 3 releases](https://developer.android.com/jetpack/androidx/releases/navigation3) |
 | `androidx.lifecycle:lifecycle-viewmodel-navigation3` | 2.11.0 (17 de junio de 2026), la misma versión de Lifecycle que ya usa el proyecto | `implementation` | F00 | [Lifecycle releases](https://developer.android.com/jetpack/androidx/releases/lifecycle) |
-| `androidx.lifecycle:lifecycle-viewmodel-compose` | 2.11.0 | `implementation`. `viewModel(factory = ...)` (S30-R16) | Primera spec con un ViewModel | [Lifecycle releases](https://developer.android.com/jetpack/androidx/releases/lifecycle), [ViewModel factories](https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories) |
-| `androidx.lifecycle:lifecycle-runtime-compose` | 2.11.0 | `implementation`. `collectAsStateWithLifecycle()` (S30-R30) | Primera spec con una pantalla | [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state) |
+| `androidx.lifecycle:lifecycle-viewmodel-compose` | 2.11.0 | `implementation`. `viewModel(factory = ...)` (S30-R16) | F00 (cambiado el 2026-10-11; antes "Primera spec con un ViewModel") | [Lifecycle releases](https://developer.android.com/jetpack/androidx/releases/lifecycle), [ViewModel factories](https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-factories) |
+| `androidx.lifecycle:lifecycle-runtime-compose` | 2.11.0 | `implementation`. `collectAsStateWithLifecycle()` (S30-R30) | F00 (cambiado el 2026-10-11; antes "Primera spec con una pantalla") | [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state) |
 | Plugin `org.jetbrains.kotlin.plugin.serialization` | La de Kotlin, 2.4.21, con `version.ref = "kotlin"` | `apply false` en la raíz, aplicado en `:app`. Genera los serializadores de las claves | F00 | [Gradle Plugin Portal](https://plugins.gradle.org/plugin/org.jetbrains.kotlin.plugin.serialization), [Navigation 3 get started](https://developer.android.com/guide/navigation/navigation-3/get-started) |
+| `androidx.navigationevent:navigationevent-compose` | 1.2.0 (Google Maven, actualizado el 7 de octubre de 2026; verificado el 2026-10-11) | `implementation`. `NavigationBackHandler` (Spec 42, D13 y S42-R06). Sube la versión de ejecución de 1.1.1, que trae `navigation3-ui` 1.2.0, a 1.2.0 | F00 (agregado el 2026-10-11 por la Spec 42) | [Google Maven](https://dl.google.com/android/maven2/androidx/navigationevent/navigationevent-compose/maven-metadata.xml), [Navigation Event releases](https://developer.android.com/jetpack/androidx/releases/navigationevent) |
 | `org.jetbrains.kotlinx:kotlinx-serialization-core` | 1.11.0, ya en el catálogo | Pasa de `runtimeOnly` a `implementation`: las claves usan `@Serializable` al compilar | F00 | Spec 20; [kotlinx.serialization releases](https://github.com/Kotlin/kotlinx.serialization/releases) (1.12.0 está en RC) |
 
 Las tres versiones de Lifecycle comparten la referencia de `lifecycle-runtime-ktx` en el catálogo, para que no se desalineen. Al agregarlas, la clave `lifecycleRuntimeKtx` se puede renombrar a `lifecycle`.
+
+Decidido el 2026-10-11 (el dueño aceptó de antemano las recomendaciones): F00 agrega todas las dependencias de esta tabla, incluidas `lifecycle-viewmodel-compose` y `lifecycle-runtime-compose`. Así F01 y F02 pueden avanzar en paralelo sin tocar el catálogo ni `app/build.gradle.kts`. Costo: dos dependencias declaradas un poco antes de su primer uso; ya llegan de forma transitiva con `lifecycle-viewmodel-navigation3`.
 
 No se agregan:
 
 - Hilt, Koin ni otro framework de inyección (ADR-30-04, D4).
 - `androidx.navigation:navigation-compose` (Navigation 2): el dueño eligió Navigation 3 en D1 (ADR-30-10).
 - `androidx.compose.material3.adaptive:adaptive-navigation3`: no hay layouts adaptables en la primera versión (Spec 01).
-- `androidx.navigationevent:navigationevent-compose` como dependencia directa: llega de forma transitiva con `navigation3-ui` (1.1.1). Se declara solo si la Spec 42 usa `NavigationBackHandler`.
+- ~~`androidx.navigationevent:navigationevent-compose` como dependencia directa~~. Cambiado el 2026-10-11: la Spec 42 usa `NavigationBackHandler` (D13), así que F00 la declara con 1.2.0 (tabla de arriba).
 - `kotlinx-collections-immutable` (ADR-30-07).
 - Las versiones alfa de Lifecycle 2.12 que muestra la página "Get started" de Navigation 3.
 
@@ -590,7 +600,7 @@ No se agregan:
 - Modularización: ADR-30-02 fija cuándo reconsiderarla.
 - Layouts adaptables, tablets y otros dispositivos (Spec 01).
 - Registro de fallos del agente: sigue abierto en la constitución.
-- Features de la visión a futuro (rutinas, mediciones corporales, gráficas).
+- Features de la visión a futuro (rutinas, mediciones corporales). Las gráficas pasan a F05 (Spec 01), en `feature/progress/` (ADR-30-03).
 
 ## Criterios de aceptación
 
@@ -667,7 +677,7 @@ Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de
 | 10 Modelo de dominio | En "Propósito" y "Fuera de alcance", anotar que el dominio se queda donde está (ADR-30-03), que las interfaces de S20-R42 se mantienen (ADR-30-05) y que el reloj de S10-R32 viene del `AppContainer` (ADR-30-09). La nota sobre `nameKey` queda resuelta: sigue `internal` porque hay un solo módulo (ADR-30-02). | La Spec 10 dejó esas decisiones a esta spec. | Aplicado el 2026-10-11 |
 | 20 Persistencia | Marcar como aplicada su fila "30 Arquitectura" de "Cambios que esta spec pide a otras specs": las interfaces se mantienen (ADR-30-05) y la inyección manual queda registrada (ADR-30-04). | Cerrar el pendiente de la Spec 20. | Aplicado el 2026-10-11 |
 | 31 Estrategia de pruebas | Recoger las costuras de "Costuras para otras specs": ViewModels y casos de uso con fakes de las interfaces y `Clock.fixed`, `kotlinx-coroutines-test` en `testImplementation` con `Dispatchers.setMain`, pruebas de UI sobre `<Nombre>Content` y pruebas de navegación sobre la pila del shell. Decidir dónde viven los fakes. | S30-A15 necesita la infraestructura de pruebas de la Spec 31. | Aplicado el 2026-10-11 |
-| 42 Pantallas y navegación | Usar claves por feature con solo ids (S30-R38), lambdas de navegación (S30-R39), entradas por feature (S30-R40); decidir una o varias pilas y la pantalla inicial; decidir el hueco de la última vez en la pantalla de F02 (D2); decidir `NavigationBackHandler` para cambios sin guardar y `android:enableOnBackInvokedCallback` para API 33 a 35. | Costuras de navegación de ADR-30-10. | Pendiente: se aplica al escribir esa spec |
+| 42 Pantallas y navegación | Usar claves por feature con solo ids (S30-R38), lambdas de navegación (S30-R39), entradas por feature (S30-R40); decidir una o varias pilas y la pantalla inicial; decidir el hueco de la última vez en la pantalla de F02 (D2); decidir `NavigationBackHandler` para cambios sin guardar y `android:enableOnBackInvokedCallback` para API 33 a 35. | Costuras de navegación de ADR-30-10. | Resuelto el 2026-10-11 por la Spec 42 (D1, D2, D13, S42-R05, S42-R16). Aplicado el 2026-10-11 en ADR-30-03, "Dependencias" y "Costuras" |
 | F00 a F04 | Citar los requisitos de esta spec que aplican y presentar la evidencia de S30-A12 a S30-A19 y S30-A22 (S30-R03). F00 agrega las dependencias aprobadas de navegación y Lifecycle; F02 agrega el reloj al `AppContainer` y los casos de uso de sesiones y series. | Aplicar la arquitectura en cada corte vertical. | Pendiente: se aplica al escribir esa spec |
 
 ## Fuentes

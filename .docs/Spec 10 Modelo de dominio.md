@@ -183,6 +183,11 @@ Orden de las sesiones: una sesión es más reciente que otra si su fecha es post
 | S10-R29 | **Series de una sesión.** Para una sesión, el dominio devuelve todas sus series ordenadas por `order` ascendente, cada una con su ejercicio, aunque esté archivado. |
 | S10-R30 | **Catálogo activo.** El dominio devuelve los ejercicios no archivados ordenados por nombre sin distinguir mayúsculas. Se puede filtrar, de forma opcional, por un `Muscle` (principal o secundario) y por un `Equipment`. Con ambos filtros, se aplican los dos. |
 | S10-R31 | **Archivados.** El dominio devuelve los ejercicios archivados ordenados por nombre, para poder desarchivarlos. |
+| S10-R33 | **Búsqueda por nombre.** Un ejercicio coincide con un texto buscado si la clave de búsqueda del texto aparece dentro de la clave de búsqueda de su nombre. La clave de búsqueda se obtiene así: se normaliza como en S10-R04, se pasa a minúsculas con `lowercase(Locale.ROOT)`, se descompone en forma NFD (`java.text.Normalizer`) y se quitan las marcas diacríticas (categoría Unicode `Mn`). Así, "ñ" cuenta como "n" (decisión "Ñ en la búsqueda"). Un texto vacío o solo con espacios coincide con todos. Es distinta de la unicidad de S10-R05, que sí distingue tildes. La función es pura y vive en `feature/catalog/domain/`. Se implementa en F02, la primera spec que la usa (pestaña Ejercicios, Spec 42). |
+| S10-R34 | **Peso más alto de cada sesión.** Para un ejercicio, el dominio devuelve, por cada sesión que tiene al menos una serie suya, la sesión (`id` y fecha) y el mayor `weightGrams` de sus series de ese ejercicio en esa sesión. Se calcula a partir de la evolución de S10-R27 y sigue su orden: fecha ascendente y luego `id` de sesión ascendente. En `BODYWEIGHT` es el mayor peso adicional y puede ser 0 (S10-R02). Sin series, devuelve vacío. Es una función pura sobre una lista de series; no guarda nada (S01-R06). Se implementa en F05. F02 usa el mismo concepto para el número de la tarjeta, sobre la sesión más reciente, con la lectura de la Spec 20. |
+| S10-R35 | **Récord personal.** Una sesión es récord personal de un ejercicio si su peso más alto (S10-R34) es mayor que el peso más alto de todas las sesiones anteriores de ese ejercicio, según el orden de sesiones. La primera sesión no es récord. Un empate no es récord. El récord vigente en una sesión es el mayor peso más alto hasta ella, incluida. Es una función pura sobre el resultado de S10-R34. Se implementa en F05. |
+
+*S10-R33 a S10-R35 se agregaron el 2026-10-11 por las Specs 40 y 42. Aplicado el 2026-10-11. No cambian el código ya implementado de esta spec; los implementan las specs F indicadas.*
 
 ## Cómo cumple S01-R06 a S01-R09
 
@@ -230,6 +235,9 @@ Salvo que se indique otra cosa, la evidencia es una prueba unitaria del dominio 
 | S10-A20 | Ningún archivo del modelo de dominio importa `android.`, `androidx.` ni librerías de terceros. | S10-R16 | `grep -rnE "^import (android\|androidx)\." <paquete de dominio>` sobre `feature/catalog/domain` y `feature/session/domain`, sin resultados |
 | S10-A21 | El documento de esta spec incluye la tabla de cumplimiento de S01-R06 a S01-R09 con sus IDs. | S01-R06 a R09 | Revisión de esta spec |
 | S10-A22 | Crear una sesión con fecha posterior a la del reloj inyectado es rechazado; con la fecha de hoy es aceptado. | S10-R32 | Prueba unitaria |
+| S10-A23 | "PRESS", "press  de" y "prés" encuentran "Press de banca". "pena" y "peña" encuentran "Remo de peña". Un texto vacío encuentra todos. | S10-R33 | Prueba unitaria (F02) |
+| S10-A24 | Con series de 60, 62,5 y 60 kg en una sesión y de 65 kg en otra posterior, el peso más alto es 62,5 kg y luego 65 kg, en orden de sesión. Un ejercicio sin series da vacío. | S10-R34 | Prueba unitaria (F05) |
+| S10-A25 | Con pesos más altos de 60, 62,5, 62,5 y 65 kg en sesiones sucesivas, solo la segunda y la cuarta son récord. La primera no lo es. | S10-R35 | Prueba unitaria (F05) |
 
 S10-R10, S10-R13 y S10-R14 se comprueban también en la Spec 20, porque dependen de cómo se persiste. S10-R15 y S10-R32 se comprueban con pruebas unitarias del dominio.
 
@@ -243,4 +251,5 @@ S10-R10, S10-R13 y S10-R14 se comprueban también en la Spec 20, porque dependen
 - [x] **Fechas futuras.** Decidido el 2026-10-10: no se permiten (S10-R32).
 - [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: S10-R16 permite `kotlinx.coroutines`, un objeto no guardado lleva `id = 0` y `normalized_name` de la Spec 20 depende de `normalizeExerciseName` y `nameKey`.
 - [x] **Última vez desde una sesión en curso.** Confirmado el 2026-10-10: S10-R26 excluye la sesión en curso y las posteriores a ella.
+- [x] **Ñ en la búsqueda.** Decidido el 2026-10-11: A, la "ñ" cuenta como "n" en la búsqueda (el dueño aceptó de antemano las recomendaciones). A: quitar todas las marcas diacríticas, incluida la de la "ñ". B: quitar las tildes pero conservar la "ñ" como letra propia. Por qué A: una búsqueda tolerante solo muestra algún resultado de más, nunca esconde el que se busca; sirve con teclados sin "ñ"; y es una sola regla (NFD sin `Mn`) sin casos especiales. B es más fiel al alfabeto, pero obliga a un caso especial y esconde "Remo de peña" a quien escribe "pena". Costo: "ano" encuentra también "año". La unicidad de S10-R05 no cambia: allí la "ñ" sigue siendo distinta.
 - [x] **Ajustes por la Spec 30.** Aprobado el 2026-10-11: el dominio se queda en su paquete (ADR-30-03), las interfaces de S20-R42 se mantienen (ADR-30-05), el reloj de S10-R32 viene del `AppContainer` (ADR-30-09) y `nameKey` sigue `internal` (ADR-30-02).

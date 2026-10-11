@@ -86,26 +86,27 @@ Este marco viene de la skill `user-research` (jobs to be done). No hubo investig
 
 ### Áreas y cómo se conectan
 
+*Cambiado el 2026-10-11 por decisión del dueño: el punto de partida es el inicio con tarjetas (Spec 42, S42-P01). Antes, el punto de partida llevaba a "Sesión", "Historial" y "Catálogo" como áreas separadas, y la sesión llevaba a "Elegir ejercicio".*
+
 ```mermaid
 flowchart LR
-  Inicio["Punto de partida"] --> Sesion["Sesión (F02)"]
-  Inicio --> Historial["Historial (F04)"]
-  Inicio --> Catalogo["Catálogo (F01)"]
-  Sesion --> Elegir["Elegir ejercicio"]
-  Elegir --> Editor["Crear o editar ejercicio (F01)"]
-  Editor -- "vuelve con el ejercicio elegido" --> Sesion
+  Inicio["Inicio: Hoy | Ejercicios (F02)"] -- "toca tarjeta" --> Registro["Registro de series (F02)"]
+  Inicio -- "Crear ejercicio o menú: Editar" --> Editor["Crear o editar ejercicio (F01)"]
+  Editor -- "logAfterSave" --> Registro
+  Registro -- "Editar ejercicio" --> Editor
+  Inicio -- "menú: Archivados" --> Archivados["Archivados (F01)"]
+  Inicio -. "Historial, F04" .-> Historial["Historial (F04)"]
   Historial --> Pasada["Sesión pasada (F04)"]
-  Pasada -- "Editar" --> Sesion
-  Catalogo --> Editor
-  Catalogo --> Archivados["Archivados (F01)"]
+  Pasada -- "Editar" --> Sesion["Sesión (F02)"]
+  Inicio -. "menú: Ver estadísticas, F05" .-> Estadisticas["Estadísticas (F05)"]
 ```
 
 La sección de la última vez (F03) vive dentro de la sesión, en el hueco de D2 de la Spec 30.
 
 ### Navegación entre flujos, por intención
 
-- Desde el punto de partida, el usuario empieza o continúa la sesión de hoy en un toque, y llega al historial o al catálogo en un toque.
-- Desde la sesión, el usuario elige un ejercicio. Si no existe, lo crea y vuelve a la sesión con ese ejercicio elegido, listo para su primera serie.
+- Desde el inicio, el usuario toca la tarjeta de un ejercicio y registra en la sesión de hoy. Llega al catálogo con la pestaña Ejercicios y, con F04, al historial en un toque. *(Cambiado el 2026-10-11 por decisión del dueño. Antes: "empieza o continúa la sesión de hoy en un toque".)*
+- Si el ejercicio no existe, el usuario lo crea desde el inicio y pasa a su registro de series, listo para la primera serie (`logAfterSave`, Spec 42).
 - Desde la sesión, el usuario ve la nota fija del ejercicio que está registrando y puede ir a editar ese ejercicio y volver.
 - Desde el historial, el usuario abre una sesión pasada en modo de solo lectura. Desde ahí la edita con el mismo flujo de la sesión de F02, o la elimina.
 - Desde el catálogo, el usuario crea y edita ejercicios, y abre los archivados para desarchivarlos.
@@ -117,14 +118,17 @@ La Spec 42 decide las pantallas, las rutas, si hay una pila o varias, y cómo se
 
 | Feature | Flujos que implementa |
 | --- | --- |
-| F00 | S40-F01 y S40-F02 (estructura, navegación entre áreas, atrás y salida) |
-| F01 | S40-F03 a S40-F07, el editor de S40-F11 y su parte de S40-F21 |
-| F02 | S40-F08 a S40-F15, S40-F23, su parte de S40-F21 y el destino de S40-F19 |
+| F00 | S40-F02 (shell, pila, atrás y salida) y una pantalla de arranque temporal hasta F02 |
+| F01 | S40-F04 a S40-F07, el editor de S40-F11 y su parte de S40-F21 |
+| F02 | S40-F01, S40-F03 (la vista del catálogo es la pestaña Ejercicios del inicio), S40-F08 a S40-F15, S40-F23, su parte de S40-F21 y el destino de S40-F19 |
 | F03 | S40-F16 |
 | F04 | S40-F17, S40-F18, S40-F20 y la entrada de S40-F19 |
+| F05 | Ningún flujo de esta spec: la pantalla de estadísticas (Spec 42, S42-P06; S01-R12) |
 | F01 a F04 | S40-F22, el recorrido de S01-A04 |
 
-Por versiones (Spec 01): la 0.0.1 trae los flujos de F00 a F03. Mientras F04 no exista, el punto de partida no ofrece el historial y F00 decide qué muestra en su lugar. En la 0.0.1, una sesión de otro día o una sesión vacía no se puede abrir ni eliminar; eso llega con F04. El criterio de la 0.0.1 es el recorrido S40-F22 sin el paso 6.
+*Cambiado el 2026-10-11 por decisión del dueño: el inicio y la vista del catálogo pasan a F02 (Spec 42, D2). Antes, F00 tenía S40-F01 y F01 tenía S40-F03.*
+
+Por versiones (Spec 01): la 0.0.1 trae los flujos de F00 a F03. Mientras F04 no exista, el inicio no muestra el acceso al historial (S42-R24). En la 0.0.1, una sesión de otro día o una sesión vacía no se puede abrir ni eliminar; eso llega con F04. El criterio de la 0.0.1 es el recorrido S40-F22 sin el paso 6.
 
 ## Flujos
 
@@ -134,12 +138,16 @@ Cada flujo indica su entrada, sus pasos, el resultado esperado, los caminos alte
 
 **S40-F01. Abrir la app**
 
+*Cambiado el 2026-10-11 por decisión del dueño: el punto de partida es el inicio con tarjetas de la Spec 42 (S42-P01).*
+
 - **Entrada.** El usuario abre la app desde el lanzador.
-- **Pasos.** La app muestra el punto de partida (D1).
-- **Éxito.** Sin desplazarse, el usuario ve la acción principal: "Empezar sesión" si no hay una sesión con fecha de hoy, o "Continuar sesión" si la hay. Además llega al historial y al catálogo en un toque.
+- **Pasos.** La app muestra el inicio (D1), en la pestaña Hoy.
+- **Éxito.** Sin desplazarse, el usuario ve sus ejercicios como tarjetas: en Hoy, los de la sesión de hoy y los de su última sesión; en Ejercicios, todos los activos. Tocar una tarjeta registra una serie de ese ejercicio (S40-F08). "Crear ejercicio" está a un toque. Con F04, el historial también está a un toque.
 - **Alternativas.** Si ya hay una sesión de hoy, se ofrece también, como acción secundaria, empezar otra sesión el mismo día (S40-F09).
-- **Vacío.** En el primer uso no hay sesiones ni ejercicios. El punto de partida ofrece "Empezar sesión" igual: el flujo de la sesión lleva a crear el primer ejercicio (S40-F22). No hay tutorial.
+- **Vacío.** En el primer uso no hay sesiones ni ejercicios. Hoy ofrece "Crear ejercicio"; al guardarlo se abre el registro de series de ese ejercicio (S40-F22). No hay tutorial.
 - **Valida.** Nada. "Hoy" sale del reloj del `AppContainer` (ADR-30-09). Saber si hay una sesión de hoy se deriva del historial (S10-R28): es su primer elemento si tiene la fecha de hoy. No hace falta una consulta nueva.
+
+> Texto anterior (historia): Pasos: "La app muestra el punto de partida (D1)." Éxito: "Sin desplazarse, el usuario ve la acción principal: "Empezar sesión" si no hay una sesión con fecha de hoy, o "Continuar sesión" si la hay. Además llega al historial y al catálogo en un toque." Vacío: "En el primer uso no hay sesiones ni ejercicios. El punto de partida ofrece "Empezar sesión" igual: el flujo de la sesión lleva a crear el primer ejercicio (S40-F22). No hay tutorial." Entrada, alternativas y validación no cambiaron.
 
 **S40-F02. Moverse entre áreas, volver y salir**
 
@@ -153,12 +161,16 @@ Cada flujo indica su entrada, sus pasos, el resultado esperado, los caminos alte
 
 **S40-F03. Ver y buscar en el catálogo**
 
-- **Entrada.** El usuario abre el catálogo desde el punto de partida.
-- **Pasos.** Ve los ejercicios no archivados ordenados por nombre (S10-R30). Puede buscar por nombre y filtrar por músculo y por equipo (D10). Toca un ejercicio para editarlo (S40-F05) o crea uno nuevo (S40-F04).
+*Cambiado el 2026-10-11 por decisión del dueño: el catálogo es la pestaña Ejercicios del inicio; tocar una tarjeta registra y editar va en su menú (Spec 42, S42-P01, S42-R12).*
+
+- **Entrada.** El usuario elige la pestaña Ejercicios en el inicio.
+- **Pasos.** Ve los ejercicios no archivados como tarjetas, ordenados por nombre (S10-R30). Puede buscar por nombre y filtrar por músculo y por equipo (D10). Toca una tarjeta para registrar una serie (S40-F08), elige "Editar ejercicio" en el menú de la tarjeta (S40-F05) o crea uno nuevo (S40-F04).
 - **Éxito.** Encuentra el ejercicio en pocos toques, también con un catálogo largo.
 - **Alternativas.** Desde aquí abre los archivados (S40-F07). Si la búsqueda no encuentra nada, se ofrece crear un ejercicio con el texto buscado como nombre.
 - **Vacío.** Catálogo vacío: explica que los ejercicios se crean aquí y ofrece "Crear ejercicio". Búsqueda sin resultados: lo dice y ofrece crear o limpiar la búsqueda.
-- **Valida.** Nada. La búsqueda necesita una regla nueva en la Spec 10 (ver "Cambios").
+- **Valida.** Nada. La búsqueda sigue la regla S10-R33 de la Spec 10.
+
+> Texto anterior (historia): Entrada: "El usuario abre el catálogo desde el punto de partida." Pasos: "Toca un ejercicio para editarlo (S40-F05) o crea uno nuevo (S40-F04)." Valida: "La búsqueda necesita una regla nueva en la Spec 10."
 
 **S40-F04. Crear un ejercicio**
 
@@ -169,7 +181,7 @@ Cada flujo indica su entrada, sus pasos, el resultado esperado, los caminos alte
   3. Elige uno o más músculos y marca cuáles son principales. El primer músculo elegido queda como principal hasta que el usuario lo cambie.
   4. Si quiere, escribe la nota fija, por ejemplo "Asiento en la posición 4".
   5. Toca "Guardar ejercicio".
-- **Éxito.** El ejercicio queda guardado y la app vuelve al origen: al catálogo, con el ejercicio en la lista, o a la sesión, con el ejercicio elegido. No se muestra aviso: el ejercicio se ve.
+- **Éxito.** El ejercicio queda guardado y la app sigue según el origen, que viaja en la clave del editor como `logAfterSave` (Spec 42, D5). Desde Hoy o desde una búsqueda sin resultados (`logAfterSave = true`), el editor se cierra y se abre el registro de series del ejercicio nuevo. Desde el botón de la pestaña Ejercicios (`logAfterSave = false`), vuelve al inicio con el ejercicio en la lista. No se muestra aviso: el ejercicio se ve. *(Cambiado el 2026-10-11 por decisión del dueño. Antes: "vuelve al origen: al catálogo, con el ejercicio en la lista, o a la sesión, con el ejercicio elegido".)*
 - **Alternativas y errores.**
   - Un rechazo del dominio se muestra junto a su campo, y el formulario conserva lo escrito (D18).
   - El nombre ya lo usa un ejercicio activo: error junto al nombre.
@@ -179,7 +191,7 @@ Cada flujo indica su entrada, sus pasos, el resultado esperado, los caminos alte
 
 **S40-F05. Editar un ejercicio**
 
-- **Entrada.** El usuario toca un ejercicio del catálogo, o elige "Editar ejercicio" desde la sesión (S40-F12).
+- **Entrada.** El usuario elige "Editar ejercicio" en el menú de una tarjeta del inicio, o desde el registro de series (S40-F12). *(Cambiado el 2026-10-11 por decisión del dueño. Antes: "toca un ejercicio del catálogo".)*
 - **Pasos.** Cambia nombre, equipo, músculos o nota y toca "Guardar ejercicio".
 - **Éxito.** Los cambios quedan guardados y la app vuelve al origen. El ejercicio conserva su `id` y todas sus series (S10-R22): el nuevo nombre aparece en la sesión, en la última vez y en el historial.
 - **Alternativas y errores.** Iguales a S40-F04, con una diferencia: si el nuevo nombre lo usa un ejercicio archivado, el error se muestra junto al nombre y no se ofrece desarchivar, porque desarchivar el otro no resuelve el cambio de nombre. Desde aquí también se archiva o se elimina (S40-F06).
@@ -205,40 +217,56 @@ Cada flujo indica su entrada, sus pasos, el resultado esperado, los caminos alte
 
 ### Sesión (F02)
 
-**S40-F08. Empezar o continuar la sesión de hoy**
+**S40-F08. Registrar en la sesión de hoy**
 
-- **Entrada.** "Empezar sesión" o "Continuar sesión" en el punto de partida.
+*Cambiado el 2026-10-11 por decisión del dueño: no hay "Empezar sesión" ni "Continuar sesión"; la sesión de hoy se usa o se crea al registrar desde una tarjeta (Spec 42, D4).*
+
+- **Entrada.** El usuario toca la tarjeta de un ejercicio en el inicio.
 - **Pasos.**
-  - **Empezar:** la app crea una sesión con la fecha de hoy y la abre (D3). La crea antes de navegar (S30-R35).
-  - **Continuar:** la app abre la sesión más reciente con fecha de hoy. Si hay dos del mismo día, abre la de mayor `id` (S10-R28).
-- **Éxito.** El usuario ve la sesión con su fecha, sus series agrupadas por ejercicio (D16) y la acción "Agregar ejercicio".
-- **Alternativas.** Una sesión empezada antes de la medianoche conserva su fecha. Después de la medianoche, el punto de partida ya no la ofrece para continuar; el usuario la abre desde el historial (S40-F19). Un doble toque en "Empezar sesión" crea una sola sesión.
-- **Vacío.** Sesión sin series: explica que todavía no tiene series y ofrece "Agregar ejercicio".
-- **Valida.** S10-R13 y S10-R32: la fecha sale del reloj y nunca es futura.
+  - La app abre el registro de series de ese ejercicio en la sesión de hoy: la más reciente con fecha de hoy, la de mayor `id` si hay varias (S10-R28). Abrirlo no escribe nada.
+  - Si no hay sesión de hoy, la app la crea junto con la primera serie guardada, en una sola escritura (S20-R39).
+- **Éxito.** La serie queda en la sesión de hoy. Al volver, Hoy muestra la sesión con su fecha y sus ejercicios en el orden de su primera serie (D16).
+- **Alternativas.** Una sesión empezada antes de la medianoche conserva su fecha. Después de la medianoche, una tarjeta tocada de nuevo registra en una sesión nueva con la nueva fecha; la anterior se abre desde el historial (S40-F19). Un doble toque en "Guardar serie" crea una sola sesión y una sola serie.
+- **Vacío.** Sin sesión de hoy, Hoy dice que aún no hay series hoy y muestra los ejercicios de la última sesión.
+- **Valida.** S10-R13 y S10-R32 al crear la sesión: la fecha sale del reloj y nunca es futura.
+
+> Texto anterior (historia): "**S40-F08. Empezar o continuar la sesión de hoy.** Entrada: "Empezar sesión" o "Continuar sesión" en el punto de partida. Pasos: Empezar: la app crea una sesión con la fecha de hoy y la abre (D3). La crea antes de navegar (S30-R35). Continuar: la app abre la sesión más reciente con fecha de hoy. Si hay dos del mismo día, abre la de mayor `id` (S10-R28). Éxito: el usuario ve la sesión con su fecha, sus series agrupadas por ejercicio (D16) y la acción "Agregar ejercicio". Alternativas: una sesión empezada antes de la medianoche conserva su fecha. Después de la medianoche, el punto de partida ya no la ofrece para continuar; el usuario la abre desde el historial (S40-F19). Un doble toque en "Empezar sesión" crea una sola sesión. Vacío: sesión sin series: explica que todavía no tiene series y ofrece "Agregar ejercicio". Valida: S10-R13 y S10-R32: la fecha sale del reloj y nunca es futura."
 
 **S40-F09. Empezar otra sesión el mismo día**
 
-- **Entrada.** La acción secundaria del punto de partida cuando ya hay una sesión de hoy (D2).
-- **Pasos.** La app crea una sesión nueva con la fecha de hoy y la abre.
-- **Éxito.** La nueva sesión es la más reciente de hoy: la siguiente vez, "Continuar sesión" abre esta.
+*Cambiado el 2026-10-11 por decisión del dueño: la acción vive en el menú de Hoy y las tarjetas registran en la sesión nueva (Spec 42, D4).*
+
+- **Entrada.** "Empezar otra sesión", acción secundaria del menú de Hoy cuando ya hay una sesión de hoy (D2).
+- **Pasos.** La app crea al momento una sesión nueva con la fecha de hoy (D3). Hoy pasa a mostrarla.
+- **Éxito.** La nueva sesión es la más reciente de hoy: desde ahora, tocar una tarjeta registra en ella.
 - **Valida.** Las mismas reglas de S40-F08.
+
+> Texto anterior (historia): Entrada: "La acción secundaria del punto de partida cuando ya hay una sesión de hoy (D2)." Pasos: "La app crea una sesión nueva con la fecha de hoy y la abre." Éxito: "la siguiente vez, "Continuar sesión" abre esta."
 
 **S40-F10. Elegir un ejercicio en la sesión**
 
-- **Entrada.** "Agregar ejercicio" en la sesión.
-- **Pasos.** El usuario ve el catálogo activo, sin archivados (S10-R18), con la misma búsqueda y los mismos filtros del catálogo (D10). Toca un ejercicio.
-- **Éxito.** Se abre el formulario de serie de ese ejercicio (S40-F12), con la última vez visible (S40-F16).
-- **Alternativas.** Elegir un ejercicio que ya está en la sesión abre su formulario de serie y no lo duplica. Elegir un ejercicio no escribe nada: un ejercicio aparece en la sesión solo cuando tiene al menos una serie guardada, porque no existe una entidad de "ejercicio dentro de la sesión" (Spec 10). Si la búsqueda no encuentra nada, se ofrece crear el ejercicio con ese nombre (S40-F11).
+*Cambiado el 2026-10-11 por decisión del dueño: elegir un ejercicio es tocar su tarjeta en el inicio (Spec 42, S42-P01).*
+
+- **Entrada.** El inicio, en la pestaña Hoy o en la pestaña Ejercicios.
+- **Pasos.** El usuario ve sus ejercicios activos como tarjetas, sin archivados (S10-R18). En Ejercicios tiene la misma búsqueda y los mismos filtros del catálogo (D10). Toca una tarjeta.
+- **Éxito.** Se abre el registro de series de ese ejercicio (S40-F12), con la última vez visible (S40-F16).
+- **Alternativas.** Elegir un ejercicio que ya está en la sesión abre su registro de series y no lo duplica. Elegir un ejercicio no escribe nada: un ejercicio aparece en la sesión solo cuando tiene al menos una serie guardada, porque no existe una entidad de "ejercicio dentro de la sesión" (Spec 10). Si la búsqueda no encuentra nada, se ofrece crear el ejercicio con ese nombre (S40-F11).
 - **Vacío.** Catálogo vacío: explica que primero hay que crear un ejercicio y ofrece "Crear ejercicio".
 - **Valida.** Nada.
 
+> Texto anterior (historia): Entrada: ""Agregar ejercicio" en la sesión." Pasos: "El usuario ve el catálogo activo, sin archivados (S10-R18), con la misma búsqueda y los mismos filtros del catálogo (D10). Toca un ejercicio." Éxito: "Se abre el formulario de serie de ese ejercicio (S40-F12), con la última vez visible (S40-F16)." Alternativas: empezaba con "Elegir un ejercicio que ya está en la sesión abre su formulario de serie y no lo duplica." El resto no cambió.
+
 **S40-F11. Crear un ejercicio desde la sesión**
 
-- **Entrada.** "Crear ejercicio" desde la elección de ejercicio (S40-F10).
+*Cambiado el 2026-10-11 por decisión del dueño: el resultado vuelve por la pila con `logAfterSave` (Spec 42, D5).*
+
+- **Entrada.** "Crear ejercicio" en Hoy, o desde una búsqueda sin resultados en Ejercicios (S40-F10). El editor se abre con `logAfterSave = true`.
 - **Pasos.** El usuario sigue S40-F04.
-- **Éxito.** Al guardar, la app vuelve a la sesión con el nuevo ejercicio elegido y su formulario de serie abierto. Lo mismo pasa si en lugar de crear elige desarchivar un ejercicio con ese nombre (D9).
-- **Alternativas.** Si cancela, vuelve a la elección de ejercicio sin cambios. Si el sistema cerró el proceso mientras tanto, el ejercicio guardado sigue en el catálogo, pero el usuario puede volver a la sesión sin la selección y tener que elegirlo.
+- **Éxito.** Al guardar, el shell saca el editor y abre el registro de series del ejercicio nuevo, listo para la primera serie. Lo mismo pasa si en lugar de crear elige desarchivar un ejercicio con ese nombre (D9).
+- **Alternativas.** Si cancela, vuelve al inicio sin cambios. Si el sistema cerró el proceso mientras tanto, la pila vuelve con su clave, así que el resultado no se pierde.
 - **Valida.** Las reglas de S40-F04.
+
+> Texto anterior (historia): Entrada: ""Crear ejercicio" desde la elección de ejercicio (S40-F10)." Éxito: "la app vuelve a la sesión con el nuevo ejercicio elegido y su formulario de serie abierto." Alternativas: "Si cancela, vuelve a la elección de ejercicio sin cambios. Si el sistema cerró el proceso mientras tanto, [...] el usuario puede volver a la sesión sin la selección y tener que elegirlo."
 
 **S40-F12. Registrar una serie**
 
@@ -305,7 +333,7 @@ F02 usa la misma consulta (S20-R29) para proponer los valores de S40-F12. La sec
 - **Entrada.** El historial desde el punto de partida.
 - **Pasos.** El usuario ve sus sesiones de la más reciente a la más antigua (S10-R28). Cada sesión se reconoce por su fecha, sus ejercicios y su número de series (D14). Toca una para abrirla.
 - **Alternativas.** Una sesión sin series se marca como tal, para que el usuario la reconozca y pueda eliminarla.
-- **Vacío.** Explica que aquí aparecen las sesiones y ofrece "Empezar sesión".
+- **Vacío.** Explica que aquí aparecen las sesiones y que se crean al registrar la primera serie desde una tarjeta, y ofrece "Ir al inicio". *(Cambiado el 2026-10-11 por decisión del dueño. Antes: ofrecía "Empezar sesión", que ya no existe.)*
 - **Valida.** Nada. El resumen por sesión necesita una consulta nueva (ver "Cambios").
 
 **S40-F18. Ver una sesión pasada**
@@ -349,24 +377,30 @@ F02 usa la misma consulta (S20-R29) para proponer los valores de S40-F12. La sec
 
 Con la app recién instalada y en modo avión:
 
-1. Abre la app (S40-F01) y toca "Empezar sesión" (S40-F08).
-2. Toca "Agregar ejercicio". El catálogo está vacío y ofrece "Crear ejercicio" (S40-F10).
+1. Abre la app (S40-F01). El inicio está en Hoy, sin sesiones ni ejercicios.
+2. Toca "Crear ejercicio" en Hoy (S40-F10). El editor se abre con `logAfterSave = true`.
 3. Crea "Press de banca": barra, pecho como principal y tríceps como secundario (S40-F11).
-4. Vuelve a la sesión con el ejercicio elegido. La última vez dice que es la primera vez (S40-F16).
+4. Pasa al registro de series del ejercicio nuevo. La última vez dice que es la primera vez (S40-F16). La sesión se crea al guardar la primera serie (D3).
 5. Fija 60 kg × 10 y guarda. Guarda otra serie con los valores propuestos (S40-F12).
 6. Sale de la sesión (S40-F15) y la abre desde el historial (S40-F17, S40-F18).
 7. Al día siguiente, al registrar "Press de banca", la última vez muestra las dos series.
 
+> Cambiado el 2026-10-11 por decisión del dueño (pasos 1 a 4). Texto anterior (historia): "1. Abre la app (S40-F01) y toca "Empezar sesión" (S40-F08). 2. Toca "Agregar ejercicio". El catálogo está vacío y ofrece "Crear ejercicio" (S40-F10). [...] 4. Vuelve a la sesión con el ejercicio elegido."
+
 **S40-F23. Sesión típica**
+
+*Cambiado el 2026-10-11 por decisión del dueño: se registra desde la tarjeta del inicio (Spec 42).*
 
 Con "Press de banca" en el catálogo y su última vez "60 kg × 10, 60 kg × 10, 60 kg × 8":
 
-1. "Continuar sesión" o "Empezar sesión" (1 toque).
-2. "Agregar ejercicio" (2) y elige "Press de banca" (3). El formulario propone 60 kg × 10.
-3. "Guardar serie" (4). Primera serie registrada, sin teclado.
+1. Abre la app. El inicio muestra la tarjeta de "Press de banca" en Hoy o en Ejercicios.
+2. Toca la tarjeta (1 toque). El registro propone 60 kg × 10.
+3. "Guardar serie" (2). Primera serie registrada, sin teclado. Si no había sesión de hoy, se crea con esta serie.
 4. Descansa. "Guardar serie" de nuevo: 60 kg × 10 (1 toque).
 5. Ajusta las repeticiones a 8 y guarda.
-6. Cierra el formulario y sigue con el siguiente ejercicio.
+6. Vuelve al inicio y toca el siguiente ejercicio.
+
+> Texto anterior (historia): "1. "Continuar sesión" o "Empezar sesión" (1 toque). 2. "Agregar ejercicio" (2) y elige "Press de banca" (3). El formulario propone 60 kg × 10. 3. "Guardar serie" (4). Primera serie registrada, sin teclado. 4. Descansa. "Guardar serie" de nuevo: 60 kg × 10 (1 toque). 5. Ajusta las repeticiones a 8 y guarda. 6. Cierra el formulario y sigue con el siguiente ejercicio."
 
 ## Validaciones y cuándo se comprueban
 
@@ -445,9 +479,9 @@ Cada estado vacío dice qué es la vista, por qué está vacía y cuál es la si
 | Búsqueda sin resultados | Ningún ejercicio coincide con el texto | Crear con ese nombre o limpiar la búsqueda |
 | Archivados vacío | Aquí aparecen los ejercicios que archivas | Ninguna |
 | Elegir ejercicio con catálogo vacío | Primero hay que crear un ejercicio | "Crear ejercicio" |
-| Sesión sin series | La sesión todavía no tiene series | "Agregar ejercicio" |
+| Sesión sin series (Hoy, tras "Empezar otra sesión") | La sesión todavía no tiene series | Tocar una tarjeta (cambiado el 2026-10-11; antes "Agregar ejercicio") |
 | Última vez sin datos | Es la primera vez con este ejercicio | Ninguna |
-| Historial vacío | Aquí aparecen las sesiones | "Empezar sesión" |
+| Historial vacío | Aquí aparecen las sesiones | "Ir al inicio" (cambiado el 2026-10-11; antes "Empezar sesión") |
 
 ## Textos clave propuestos
 
@@ -455,7 +489,7 @@ Son sugerencias, escritas con la skill `ux-copy`: claras, cortas, con los térmi
 
 | Flujo | Elemento | Texto sugerido |
 | --- | --- | --- |
-| S40-F01 | Acción principal | "Empezar sesión" / "Continuar sesión" |
+| S40-F01 | Acción principal | Las tarjetas; sin ejercicios, "Crear ejercicio" (cambiado el 2026-10-11; antes "Empezar sesión" / "Continuar sesión") |
 | S40-F09 | Acción secundaria | "Empezar otra sesión" |
 | S40-F03 | Catálogo vacío | "Aún no tienes ejercicios. Crea uno para registrar sus series." |
 | S40-F03 | Búsqueda sin resultados | "Ningún ejercicio coincide con «{texto}»." Acción: "Crear «{texto}»" |
@@ -471,7 +505,7 @@ Son sugerencias, escritas con la skill `ux-copy`: claras, cortas, con los térmi
 | S40-F04 | Nota larga | "La nota es muy larga. Usa 500 caracteres o menos." |
 | S40-F06 | Eliminar (diálogo) | Título: "¿Eliminar «Remo con mancuerna»?". Texto: "No tiene series, así que se borra para siempre." Botones: "Eliminar ejercicio" / "Conservar" |
 | S40-F07 | Archivados vacío | "No tienes ejercicios archivados. Los que archives aparecerán aquí." |
-| S40-F08 | Sesión sin series | "Esta sesión aún no tiene series." Acción: "Agregar ejercicio" |
+| S40-F08 | Sesión sin series | "Esta sesión aún no tiene series. Toca un ejercicio para registrar." (cambiado el 2026-10-11; antes la acción "Agregar ejercicio") |
 | S40-F10 | Elegir con catálogo vacío | "Aún no tienes ejercicios. Crea uno para registrar su primera serie." |
 | S40-F12 | Guardar | "Guardar serie" |
 | S40-F12 | Peso en peso corporal | "Peso adicional" |
@@ -484,7 +518,7 @@ Son sugerencias, escritas con la skill `ux-copy`: claras, cortas, con los térmi
 | S40-F13 | Eliminar serie (diálogo) | Título: "¿Eliminar esta serie?". Texto: "60 kg × 10 de Press de banca. No se puede deshacer." Botones: "Eliminar serie" / "Conservar" |
 | S40-F14 | Fecha futura | "La fecha no puede ser posterior a hoy." |
 | S40-F16 | Sin última vez | "Primera vez con este ejercicio." |
-| S40-F17 | Historial vacío | "Aún no hay sesiones. Empieza una y aparecerá aquí." Acción: "Empezar sesión" |
+| S40-F17 | Historial vacío | "Aún no hay sesiones. Registra una serie desde el inicio y aparecerá aquí." Acción: "Ir al inicio" (cambiado el 2026-10-11; antes "Empezar sesión") |
 | S40-F17 | Sesión sin series | "Sin series" |
 | S40-F20 | Eliminar sesión (diálogo) | Título: "¿Eliminar la sesión del jue 8 oct?". Texto: "Se eliminarán sus 18 series. No se puede deshacer." Botones: "Eliminar sesión" / "Conservar" |
 | S40-F21 | Descartar (diálogo) | Título: "¿Descartar los cambios?". Texto: "Lo que cambiaste no se ha guardado." Botones: "Descartar" / "Seguir editando" |
@@ -520,10 +554,10 @@ Esta sección toma la parte de flujos de la skill `accessibility-review` (WCAG 2
 | S40-R06 | Un fallo inesperado muestra un mensaje genérico, conserva lo escrito y permite reintentar (S30-R23). | Todos los que escriben |
 | S40-R07 | Mientras una escritura está en curso, su acción no se puede volver a disparar. Un doble toque crea una sola sesión, serie o ejercicio. | S40-F04, S40-F08, S40-F09, S40-F12 |
 | S40-R08 | La app no redondea, recorta ni corrige en silencio un valor que el usuario fijó. Solo aplica la normalización de S10-R04 y S10-R12, que se ve en el resultado guardado. | S40-F04, S40-F05, S40-F12 a S40-F14 |
-| S40-R09 | La app abre en el punto de partida (D1). Sin desplazarse, muestra "Empezar sesión" si no hay una sesión con fecha de hoy o "Continuar sesión" si la hay, y da acceso en un toque al historial y al catálogo. | S40-F01 |
+| S40-R09 | La app abre en el inicio (D1), en la pestaña Hoy. Sin desplazarse, muestra las tarjetas de los ejercicios (o "Crear ejercicio" si no hay ninguno) y da acceso en un toque a la pestaña Ejercicios y, con F04, al historial. *Cambiado el 2026-10-11 por decisión del dueño. Antes: mostraba "Empezar sesión" o "Continuar sesión" y daba acceso al historial y al catálogo.* | S40-F01 |
 | S40-R10 | Desde la raíz de un área principal distinta del punto de partida, atrás vuelve al punto de partida. Desde el punto de partida, atrás sale de la app. | S40-F02 |
 | S40-R11 | Al volver desde segundo plano, el usuario sigue donde estaba. Tras la muerte del proceso, la app vuelve a la misma ubicación con todo lo guardado; solo se puede perder lo no guardado de un formulario abierto (D19). | S40-F02 |
-| S40-R12 | El catálogo muestra los ejercicios no archivados ordenados por nombre (S10-R30). Tocar uno abre su edición. Vacío, ofrece crear el primero. | S40-F03 |
+| S40-R12 | La pestaña Ejercicios muestra los ejercicios no archivados como tarjetas ordenadas por nombre (S10-R30). Tocar una tarjeta abre su registro de series; "Editar ejercicio" está en el menú de la tarjeta. Vacío, ofrece crear el primero. *Cambiado el 2026-10-11 por decisión del dueño. Antes: "Tocar uno abre su edición".* | S40-F03 |
 | S40-R13 | El catálogo y la elección de ejercicio permiten buscar por nombre, sin distinguir mayúsculas ni tildes, y filtrar por músculo y por equipo (D10). | S40-F03, S40-F10 |
 | S40-R14 | Una búsqueda sin resultados ofrece crear un ejercicio con el texto buscado como nombre. | S40-F03, S40-F10, S40-F11 |
 | S40-R15 | Crear un ejercicio pide nombre, equipo, músculos con principal o secundario y nota opcional. Al guardar, la app vuelve al origen con el ejercicio visible o elegido. | S40-F04 |
@@ -532,11 +566,11 @@ Esta sección toma la parte de flujos de la skill `accessibility-review` (WCAG 2
 | S40-R18 | Editar un ejercicio conserva su `id` y sus series (S10-R22). Los cambios se ven en la sesión, en la última vez y en el historial. | S40-F05 |
 | S40-R19 | La edición de un ejercicio con series ofrece "Archivar ejercicio", que actúa al momento y muestra un aviso con "Deshacer". La de uno sin series ofrece "Eliminar ejercicio", con confirmación. El resultado lo decide el dominio en la transacción (S20-R40) y el aviso dice lo que pasó (D8). | S40-F06 |
 | S40-R20 | Los archivados se abren desde el catálogo, ordenados por nombre (S10-R31). "Desarchivar" actúa al momento y un aviso lo confirma. Vacío, explica qué aparece ahí. | S40-F07 |
-| S40-R21 | "Empezar sesión" crea una sesión con la fecha de hoy del reloj (S30-R36) y la abre después de crearla. "Continuar sesión" abre la sesión más reciente con fecha de hoy, la de mayor `id` si hay varias (S10-R28), sin crear otra (D2, D3). | S40-F08 |
+| S40-R21 | Tocar una tarjeta abre el registro de series en la sesión de hoy sin escribir nada: la más reciente con fecha de hoy, la de mayor `id` si hay varias (S10-R28). Sin sesión de hoy, la primera serie guardada crea la sesión con la fecha del reloj (S30-R36) junto con la serie, en una sola escritura (S20-R39, D3). "Empezar otra sesión" crea la sesión al momento (S40-R22). *Cambiado el 2026-10-11 por decisión del dueño. Antes: "Empezar sesión" creaba la sesión y "Continuar sesión" abría la de hoy.* | S40-F08 |
 | S40-R22 | Otra sesión el mismo día se crea solo con una acción secundaria explícita (D2). | S40-F09 |
 | S40-R23 | La vista de una sesión muestra siempre su fecha y su nota, y sus series agrupadas por ejercicio en el orden de la primera serie de cada uno (D16). La numeración visible de las series es su posición dentro del ejercicio, no el valor de `order` (S10-R09). Un ejercicio aparece cuando tiene al menos una serie guardada. | S40-F08, S40-F12, S40-F19 |
 | S40-R24 | Elegir ejercicio muestra el catálogo activo, sin archivados (S10-R18). Elegir uno abre su formulario de serie; elegir uno que ya está en la sesión no lo duplica. Vacío, ofrece crear un ejercicio. | S40-F10 |
-| S40-R25 | Al guardar un ejercicio creado desde la sesión, o al desarchivarlo por D9, la app vuelve a la sesión con ese ejercicio elegido y su formulario de serie abierto. | S40-F11 |
+| S40-R25 | Al guardar un ejercicio creado con `logAfterSave = true` (desde Hoy o desde una búsqueda sin resultados), o al desarchivarlo por D9, el shell saca el editor y abre el registro de series de ese ejercicio (Spec 42, S42-R08). Con `logAfterSave = false`, solo saca el editor. *Cambiado el 2026-10-11 por decisión del dueño. Antes: "la app vuelve a la sesión con ese ejercicio elegido y su formulario de serie abierto".* | S40-F11 |
 | S40-R26 | En el formulario de serie el usuario ajusta el peso (de 0 a 1000 kg, en pasos de 0,25 kg) y las repeticiones (de 1 a 999), partiendo de los valores propuestos de D5. En peso corporal, el peso se presenta como peso adicional y parte de 0 (S10-R02). Sin valores propuestos, el usuario los fija antes de poder guardar. El control lo eligen la Spec 42 y F02. | S40-F12, S40-F13 |
 | S40-R27 | Al guardar una serie, aparece en la sesión con su número, el formulario queda listo para la siguiente con los mismos valores y TalkBack anuncia la serie guardada. | S40-F12 |
 | S40-R28 | Una serie se corrige en su peso y sus repeticiones con las reglas de la Spec 10. Eliminarla pide confirmación (D7). La sesión puede quedar sin series (S10-R24). El ejercicio de una serie no se cambia en la primera versión (D15). | S40-F13 |
@@ -569,9 +603,11 @@ Esta sección toma la parte de flujos de la skill `accessibility-review` (WCAG 2
 
 Todas cerradas el 2026-10-11 con la opción recomendada. Cada una conserva sus alternativas para que el dueño pueda revisarlas.
 
-- [x] **D1. Punto de partida.** Decidido el 2026-10-11: A, entrenar primero (el dueño aceptó de antemano las recomendaciones). A: la app abre en un punto de partida que pone primero empezar o continuar la sesión de hoy, con el historial y el catálogo a un toque. B: abrir en el catálogo, como el ejemplo de ADR-30-10. C: abrir en el historial, con la acción de entrenar destacada. D: abrir directo en la sesión de hoy, creándola si no existe. Recomendación: A. Lleva al camino más usado en un toque y no crea sesiones al abrir la app. B pone primero algo que se usa poco. D crea sesiones vacías cada vez que se abre la app. Costo: un toque antes de la sesión. La Spec 42 elige la forma; un historial con una acción de entrenar destacada también cumple A si esa acción se ve sin desplazarse.
+- [x] **D1. Punto de partida.** Cambiado el 2026-10-11 por decisión del dueño: la app abre en el inicio de la Spec 42 (S42-P01), con barra superior centrada, pestañas en píldora "Hoy" y "Ejercicios" y una tarjeta grande por ejercicio. Tocar una tarjeta abre el registro de series de ese ejercicio en la sesión de hoy, y la sesión se crea al guardar la primera serie (Spec 42, D4). Reemplaza a la opción A. Afecta a S40-F01, S40-F08, S40-F10 y S40-F23, ya enmendados; el resto de esta spec se alinea con las filas "40" de "Cambios" de la Spec 42.
+  - *Texto anterior (historia):* Decidido el 2026-10-11: A, entrenar primero (el dueño aceptó de antemano las recomendaciones). A: la app abre en un punto de partida que pone primero empezar o continuar la sesión de hoy, con el historial y el catálogo a un toque. B: abrir en el catálogo, como el ejemplo de ADR-30-10. C: abrir en el historial, con la acción de entrenar destacada. D: abrir directo en la sesión de hoy, creándola si no existe. Recomendación: A. Lleva al camino más usado en un toque y no crea sesiones al abrir la app. B pone primero algo que se usa poco. D crea sesiones vacías cada vez que se abre la app. Costo: un toque antes de la sesión. La Spec 42 elige la forma; un historial con una acción de entrenar destacada también cumple A si esa acción se ve sin desplazarse.
 - [x] **D2. Empezar o continuar.** Decidido el 2026-10-11: A, continuar la de hoy por defecto (el dueño aceptó de antemano las recomendaciones). A: la acción principal continúa la sesión más reciente de hoy si existe y si no crea una; otra sesión el mismo día es una acción secundaria explícita. B: "Empezar sesión" siempre crea una nueva. C: una sola sesión por día, impuesta por la interfaz. Recomendación: A. Evita partir un entrenamiento en dos al volver a la app, y conserva las dos sesiones por día que permite el dominio. B crea duplicados por error y rompe la última vez. C esconde algo que el dominio permite. Costo: quien entrena dos veces el mismo día tiene que elegir la acción secundaria.
-- [x] **D3. Cuándo se crea la sesión.** Decidido el 2026-10-11: A, al empezar (el dueño aceptó de antemano las recomendaciones). A: la sesión se crea al tocar "Empezar sesión"; una sesión sin series es válida (S10-R24) y se ve en el historial como "Sin series". B: la sesión es un borrador hasta guardar la primera serie o la nota, y entonces se crea junto con ella (S20-R39). C: A, y además la app borra sola una sesión vacía al salir. Recomendación: A. Es lo más simple, cada serie se agrega a una sesión que ya existe y no hay estados ocultos. B evita sesiones vacías, pero agrega un estado de borrador y un caso de uso compuesto. C borra datos sin que el usuario lo pida y obliga a interceptar atrás. Costo: un toque por error deja una sesión vacía, que el usuario reconoce y elimina desde el historial.
+- [x] **D3. Cuándo se crea la sesión.** Cambiado el 2026-10-11 por decisión del dueño: B, con la primera serie desde una tarjeta (Spec 42, D4). Tocar una tarjeta abre el registro sin escribir nada. Si no hay sesión de hoy, la primera serie guardada la crea junto con ella, en una sola escritura (`createSession(session, sets)`, S20-R39). "Empezar otra sesión" (S40-F09) sigue siendo una acción explícita y crea la sesión al momento. Así, mirar una tarjeta no deja sesiones vacías. No hay estado de borrador: el registro solo guarda el `id` de la sesión que resolvió.
+  - *Texto anterior (historia):* Decidido el 2026-10-11: A, al empezar (el dueño aceptó de antemano las recomendaciones). A: la sesión se crea al tocar "Empezar sesión"; una sesión sin series es válida (S10-R24) y se ve en el historial como "Sin series". B: la sesión es un borrador hasta guardar la primera serie o la nota, y entonces se crea junto con ella (S20-R39). C: A, y además la app borra sola una sesión vacía al salir. Recomendación: A. Es lo más simple, cada serie se agrega a una sesión que ya existe y no hay estados ocultos. B evita sesiones vacías, pero agrega un estado de borrador y un caso de uso compuesto. C borra datos sin que el usuario lo pida y obliga a interceptar atrás. Costo: un toque por error deja una sesión vacía, que el usuario reconoce y elimina desde el historial.
 - [x] **D4. Terminar la sesión.** Decidido el 2026-10-11: A, sin paso de terminar (el dueño aceptó de antemano las recomendaciones). A: no hay paso de terminar; todo se guarda al momento y salir es terminar. B: un botón "Terminar" que solo vuelve al punto de partida con un resumen. C: un estado "terminada" en la sesión. Recomendación: A. El dominio no tiene estado ni hora de fin, y un botón que no guarda nada confunde. C exige cambiar la Spec 10. Costo: no hay un momento de cierre; si el dueño lo quiere, C llega con su propia spec.
 - [x] **D5. Valores propuestos de una serie nueva.** Decidido el 2026-10-11: A, la primera desde la última vez y las demás desde la anterior de hoy (el dueño aceptó de antemano las recomendaciones). A: la primera serie del ejercicio en la sesión propone la primera serie de la última vez; las siguientes proponen la serie anterior de hoy; sin ninguna de las dos no hay propuesta. B: propuesta por posición: la serie n de hoy propone la serie n de la última vez y, si hoy hay más, la última. C: sin valores propuestos. Recomendación: A. Es predecible y sigue lo que el usuario hace hoy: si sube el peso en la primera serie, las siguientes lo siguen. B acierta mejor cuando se repite un esquema en pirámide, pero propone el peso viejo después de una subida. C obliga a ajustar cada serie desde cero. Costo: en una pirámide, el usuario ajusta cada serie. F02 lee la última vez con la consulta de su propio repositorio (S20-R29).
 - [x] **D6. Dónde se ve la última vez.** Decidido el 2026-10-11: A, siempre visible al fijar una serie (el dueño aceptó de antemano las recomendaciones). A: la última vez se ve, sin toques extra, siempre que el usuario fija una serie de ese ejercicio, nueva o corregida. B: detrás de un toque, por ejemplo "Ver la última vez". C: solo en la lista de la sesión, en el grupo del ejercicio. Recomendación: A. Es el momento en que el usuario decide el peso (S01-R03). B agrega un toque al camino más usado. C la oculta cuando el formulario tapa la lista. Costo: ocupa espacio en el formulario; la Spec 42 decide cuánto.
@@ -594,12 +630,12 @@ Todas cerradas el 2026-10-11 con la opción recomendada. Cada una conserva sus a
 No hay flujo para esto en la primera versión. Agregarlo exige una spec nueva y, si cambia el alcance, actualizar la Spec 01.
 
 - Cuentas, inicio de sesión, nube, sincronización, respaldo, exportación e importación (Spec 01).
-- Gráficas de progreso y cualquier vista de la evolución de un ejercicio. La consulta de evolución (S10-R27) existe, pero ningún flujo de la primera versión la usa.
+- Flujos de gráficas de progreso. *Cambiado el 2026-10-11 por decisión del dueño:* la pantalla de estadísticas por ejercicio es F05, en la 0.0.2 (S01-R12, Spec 42 S42-P06). Usa la evolución (S10-R27) con S10-R34 y S10-R35, y esta spec no le define flujos. Antes: "Gráficas de progreso y cualquier vista de la evolución de un ejercicio [...] ningún flujo de la primera versión la usa".
 - Rutinas, plantillas y copiar o repetir una sesión anterior.
 - Temporizador de descanso.
 - Mediciones corporales.
 - Selector de unidad y libras.
-- Récords, máximos, estadísticas y rachas.
+- Rachas, y récords o estadísticas fuera de la pantalla de F05. *(Cambiado el 2026-10-11: "récord personal" y "peso más alto" llegan con F05.)*
 - Reordenar series o ejercicios dentro de una sesión, o mover series entre sesiones.
 - Cambiar el ejercicio de una serie (D15).
 - Nota por serie o nota del ejercicio dentro de una sesión (Spec 10).
@@ -625,7 +661,7 @@ La evidencia sale sobre todo de las specs F, con las herramientas de la Spec 31:
 | S40-A05 | Cada acción tiene un control visible que se activa con un toque. | S40-R02 | Revisión de las pantallas de la Spec 42 y pruebas de UI que usan solo clics | Spec 42, F01 a F04 |
 | S40-A06 | En modo avión, el recorrido S40-F22 se completa entero. Es el mismo recorrido de S01-A04. | S40-R03 | Captura o video en el teléfono | F01 a F04 |
 | S40-A07 | Ningún flujo pide permisos del sistema. | S40-R03 | `grep -rnE "requestPermissions\|RequestPermission" app/src/main` sin resultados | F00 a F04 |
-| S40-A08 | Sin sesión de hoy, el punto de partida ofrece "Empezar sesión"; con una sesión de hoy, ofrece "Continuar sesión" y la acción secundaria. | S40-R09, S40-R22 | Prueba de ViewModel con fake y `Clock.fixed` | F02, con la estructura de F00 |
+| S40-A08 | La app abre en Hoy con las tarjetas, o con "Crear ejercicio" si no hay ejercicios. Sin sesión de hoy, el menú no ofrece "Empezar otra sesión"; con una sesión de hoy, sí. *Cambiado el 2026-10-11 por decisión del dueño. Antes: "Empezar sesión" o "Continuar sesión" según hubiera sesión de hoy.* | S40-R09, S40-R22 | Prueba de ViewModel con fake y `Clock.fixed` | F02, con el shell de F00 |
 | S40-A09 | Atrás desde la raíz de un área vuelve al punto de partida, y desde el punto de partida sale de la app. | S40-R10 | Prueba de navegación sobre la pila del shell | F00 |
 | S40-A10 | El catálogo excluye archivados, ordena por nombre y muestra su estado vacío con "Crear ejercicio". | S40-R12, S40-R45 | Prueba de ViewModel y prueba de UI sobre `Content` | F01 |
 | S40-A11 | Buscar "elevacion" encuentra "Elevación lateral"; buscar "PRESS  de" encuentra "Press de banca". Los filtros por músculo y equipo se combinan con la búsqueda. | S40-R13 | Prueba unitaria de la regla de búsqueda y pruebas de ViewModel del catálogo y de la elección | F01, F02 |
@@ -635,11 +671,11 @@ La evidencia sale sobre todo de las specs F, con las herramientas de la Spec 31:
 | S40-A15 | Al crear con el nombre de un archivado, la app ofrece la elección. "Desarchivar" recupera el existente sin cambios y vuelve al origen; "Usar otro nombre" vuelve al formulario con lo escrito. Al editar, solo se muestra el error. | S40-R17 | Prueba de ViewModel | F01 |
 | S40-A16 | Un ejercicio con series muestra "Archivar ejercicio": se archiva sin diálogo y el aviso con "Deshacer" lo desarchiva. Uno sin series muestra "Eliminar ejercicio": se borra solo tras confirmar. | S40-R19, S40-R42, S40-R43 | Prueba de ViewModel y prueba de UI | F01 |
 | S40-A17 | Archivados lista por nombre; "Desarchivar" devuelve el ejercicio al catálogo con sus series y muestra un aviso. | S40-R20 | Prueba de ViewModel | F01 |
-| S40-A18 | "Empezar sesión" crea una sola sesión con la fecha del reloj, también con doble toque, y la abre después de crearla. "Continuar sesión" abre la de mayor `id` de hoy y no crea ninguna. | S40-R07, S40-R21 | Prueba de ViewModel con fake y `Clock.fixed` | F02 |
+| S40-A18 | Tocar una tarjeta sin sesión de hoy no crea ninguna sesión. Guardar la primera serie crea una sola sesión con la fecha del reloj y esa serie, también con doble toque. Con sesiones de hoy, la serie va a la de mayor `id`. *Cambiado el 2026-10-11 por decisión del dueño. Antes: probaba "Empezar sesión" y "Continuar sesión".* | S40-R07, S40-R21 | Prueba de ViewModel con fake y `Clock.fixed` | F02 |
 | S40-A19 | Una segunda sesión del mismo día se crea solo con la acción secundaria. | S40-R22 | Prueba de ViewModel | F02 |
 | S40-A20 | La sesión agrupa por ejercicio en el orden de su primera serie, y series con `order` 1, 3 y 4 de un ejercicio se numeran 1, 2 y 3. La fecha siempre se ve. | S40-R23 | Prueba de ViewModel y prueba de UI | F02 |
 | S40-A21 | La elección de ejercicio excluye archivados, abre el formulario del elegido y no duplica uno que ya está en la sesión. Con catálogo vacío ofrece "Crear ejercicio". | S40-R24 | Prueba de ViewModel | F02 |
-| S40-A22 | Crear un ejercicio desde la sesión, o desarchivarlo por D9, vuelve a la sesión con ese ejercicio elegido y su formulario de serie abierto. | S40-R25 | Prueba de navegación | F02, con el editor de F01 |
+| S40-A22 | Crear un ejercicio con `logAfterSave = true`, o desarchivarlo por D9, deja la pila [inicio, registro de ese ejercicio]; con `logAfterSave = false`, deja [inicio] (S42-A06). *Cambiado el 2026-10-11 por decisión del dueño.* | S40-R25 | Prueba de navegación | F02, con el editor de F01 |
 | S40-A23 | Valores propuestos: la primera serie propone la primera de la última vez; la siguiente propone la recién guardada; en peso corporal sin propuesta, el peso adicional es 0; sin propuesta en otro equipo, guardar exige fijar los valores. | S40-R26 | Prueba de ViewModel | F02 |
 | S40-A24 | 0 g, 62 500 g y 1 000 000 g se aceptan; 62 300 g y 1 000 250 g no se pueden guardar; 0 y 1000 repeticiones no se pueden guardar. Un valor rechazado no escribe nada y ningún valor se redondea en silencio. | S40-R05, S40-R08, S40-R26 | Prueba de ViewModel | F02 |
 | S40-A25 | Tras guardar, la serie aparece con su número, el formulario conserva los mismos valores para la siguiente y la serie se anuncia por accesibilidad. | S40-R27, S40-R47 | Prueba de UI con aserciones de semántica | F02 |
@@ -694,11 +730,11 @@ Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio.
 
 | Spec | Cambio propuesto | Motivo | Estado |
 | --- | --- | --- | --- |
-| 10 Modelo de dominio | Agregar una regla de búsqueda por nombre: un ejercicio coincide si el texto buscado, normalizado como en S10-R04 y comparado sin mayúsculas (`Locale.ROOT`) y sin tildes, aparece dentro de su nombre. Aclarar que es distinta de la unicidad de S10-R05, que sí distingue tildes, y si la ñ cuenta como n. La función vive en `catalog.domain` porque la usan F01 y F02. | D10, S40-R13. La Spec 10 no tiene búsqueda por nombre. | Pendiente |
-| F01 y 20 Persistencia | Agregar a `ExerciseRepository` una lectura observable de si un ejercicio tiene series, con su consulta en `ExerciseDao`. Hoy `countSetsOfExercise` solo se usa dentro de la transacción de S20-R40. Por S30-R17, la lectura la agrega la spec F01 como contrato explícito y la Spec 20 documenta la consulta. | D8, S40-R19. | Pendiente |
-| F04 y 20 Persistencia | Agregar a `SessionRepository` una lectura observable del resumen del historial: cada sesión, en el orden de S10-R28, con sus ejercicios en el orden de su primera serie y su número de series, en una sola consulta. Por S30-R17, la agrega la spec F04 y la Spec 20 documenta la consulta. | D14, S40-R36. Hoy haría falta una consulta por sesión. | Pendiente |
-| 42 Pantallas y navegación, y F02 | Elegir el control para fijar el peso y las repeticiones. El dueño prefiere sliders de estilo Material 3 Expressive: pista gruesa, manija de barra vertical, un hueco y marcas de parada. La precisión de 0,25 kg en un rango de 0 a 1000 kg (4000 pasos) exige una forma de ajuste fino. El control parte del valor propuesto (D5), no guarda un valor que el usuario no fijó (S40-R26) y se puede llevar a cualquier valor con TalkBack sin cientos de pasos (S40-R49). | Decisión del dueño del 2026-10-11: esta spec describe la entrada del peso solo por intención. | Pendiente |
-| 42 Pantallas y navegación | Llevar los flujos a pantallas: la forma del punto de partida (D1) y qué feature lo llena; un solo `NavigationBackHandler` por formulario, activo solo con cambios (D12); cómo vuelve un resultado del editor de ejercicio a la sesión (S40-R25) y cómo llega un aviso a la vista de destino (S40-R43), sin romper S30-R28; dónde va el hueco de la última vez y la nota fija en el formulario de serie (D6, D13); la sesión pasada de solo lectura y su paso a F02 (D11). | Costuras de ADR-30-10 y flujos de esta spec. | Pendiente |
+| 10 Modelo de dominio | Agregar una regla de búsqueda por nombre: un ejercicio coincide si el texto buscado, normalizado como en S10-R04 y comparado sin mayúsculas (`Locale.ROOT`) y sin tildes, aparece dentro de su nombre. Aclarar que es distinta de la unicidad de S10-R05, que sí distingue tildes, y si la ñ cuenta como n. La función vive en `catalog.domain` porque la usan F01 y F02. | D10, S40-R13. La Spec 10 no tiene búsqueda por nombre. | Aplicado el 2026-10-11: S10-R33, con la decisión "Ñ en la búsqueda" (la ñ cuenta como n). Se implementa en F02 |
+| F01 y 20 Persistencia | Agregar a `ExerciseRepository` una lectura observable de si un ejercicio tiene series, con su consulta en `ExerciseDao`. Hoy `countSetsOfExercise` solo se usa dentro de la transacción de S20-R40. Por S30-R17, la lectura la agrega la spec F01 como contrato explícito y la Spec 20 documenta la consulta. | D8, S40-R19. | Aplicado el 2026-10-11 en la Spec 20 como requisito; se implementa en F01 |
+| F04 y 20 Persistencia | Agregar a `SessionRepository` una lectura observable del resumen del historial: cada sesión, en el orden de S10-R28, con sus ejercicios en el orden de su primera serie y su número de series, en una sola consulta. Por S30-R17, la agrega la spec F04 y la Spec 20 documenta la consulta. | D14, S40-R36. Hoy haría falta una consulta por sesión. | Aplicado el 2026-10-11 en la Spec 20 como requisito; se implementa en F04 |
+| 42 Pantallas y navegación, y F02 | Elegir el control para fijar el peso y las repeticiones. El dueño prefiere sliders de estilo Material 3 Expressive: pista gruesa, manija de barra vertical, un hueco y marcas de parada. La precisión de 0,25 kg en un rango de 0 a 1000 kg (4000 pasos) exige una forma de ajuste fino. El control parte del valor propuesto (D5), no guarda un valor que el usuario no fijó (S40-R26) y se puede llevar a cualquier valor con TalkBack sin cientos de pasos (S40-R49). | Decisión del dueño del 2026-10-11: esta spec describe la entrada del peso solo por intención. | Resuelto el 2026-10-11 por la Spec 42 (D7, S42-R18 a S42-R20); se implementa en F02 |
+| 42 Pantallas y navegación | Llevar los flujos a pantallas: la forma del punto de partida (D1) y qué feature lo llena; un solo `NavigationBackHandler` por formulario, activo solo con cambios (D12); cómo vuelve un resultado del editor de ejercicio a la sesión (S40-R25) y cómo llega un aviso a la vista de destino (S40-R43), sin romper S30-R28; dónde va el hueco de la última vez y la nota fija en el formulario de serie (D6, D13); la sesión pasada de solo lectura y su paso a F02 (D11). | Costuras de ADR-30-10 y flujos de esta spec. | Resuelto el 2026-10-11 por la Spec 42 (D1 a D6, D8, D13); las filas "40" de la Spec 42 se aplicaron el 2026-10-11 |
 | 41 Sistema de diseño | Dar forma visual a los patrones de esta spec: diálogos de confirmación, avisos con y sin acción y su duración respetando la accesibilidad, errores junto al campo, estados vacíos, formato de fecha y de peso. Revisar los textos propuestos con el tono que elija el dueño. | Esta spec define el comportamiento y deja la apariencia a la Spec 41. | Pendiente |
 | 30 Arquitectura | Anotar en el contexto de ADR-30-05 y de D2 que, por D11 de esta spec, F04 corrige sesiones y series a través del flujo de F02, no con pantallas de edición propias. Los casos de uso de S30-R20 se mantienen como la única vía de escritura validada; su justificación pasa a ser que los usan varias vistas de F02 y no "F02 y F04". Anotar también que F02 lee la última vez para proponer valores (D5), lo que S30-R10 ya permite. La decisión no cambia. | Mantener la Spec 30 coherente con los flujos. | Pendiente |
 | 31 Estrategia de pruebas | Incluir pruebas de UI y de navegación que cubran los criterios S40-A: contar toques, comprobar el teclado, diálogos de cambios sin guardar, atrás hasta salir y aserciones de semántica para TalkBack y tamaño táctil. | La evidencia de los criterios S40-A depende de esas herramientas. | Pendiente |
