@@ -1,9 +1,20 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room3)
 }
+
+// Spec F00 (SF00-R13): the release is signed only when the four credentials exist and are not blank.
+// They live outside the repository, in ~/.gradle/gradle.properties (Spec 01, "Firma de los APK").
+val releaseSigning = listOf(
+    "WEIGHTRACK_RELEASE_STORE_FILE",
+    "WEIGHTRACK_RELEASE_STORE_PASSWORD",
+    "WEIGHTRACK_RELEASE_KEY_ALIAS",
+    "WEIGHTRACK_RELEASE_KEY_PASSWORD",
+).associateWith { providers.gradleProperty(it).orNull?.takeIf(String::isNotBlank) }
+val hasReleaseSigning = releaseSigning.values.all { it != null }
 
 android {
     namespace = "com.juancholopes.weightrack"
@@ -21,8 +32,27 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseSigning.getValue("WEIGHTRACK_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigning.getValue("WEIGHTRACK_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning.getValue("WEIGHTRACK_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning.getValue("WEIGHTRACK_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        // Installs next to the release as com.juancholopes.weightrack.debug (S03-R07, Spec F00 SF00-R12).
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -54,12 +84,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.androidx.navigationevent.compose)
     implementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.sqlite.framework)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-    runtimeOnly(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.core)
     ksp(libs.androidx.room3.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

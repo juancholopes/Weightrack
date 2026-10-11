@@ -1,0 +1,4 @@
+<resources>
+    <!-- Launcher label of the debug build, so it is told apart from the release one (Spec F00, D1). -->
+    <string name="app_label">Weightrack Debug</string>
+</resources>

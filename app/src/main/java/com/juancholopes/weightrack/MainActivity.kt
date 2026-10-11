@@ -4,27 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import com.juancholopes.weightrack.ui.WeightrackApp
 import com.juancholopes.weightrack.ui.theme.WeightrackTheme
 
+/** The only activity (S30-R11): edge to edge, and the shell inside the theme (SF00-R05). */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            WeightrackTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            WeightrackTheme { WeightrackApp() }
         }
     }
 }
