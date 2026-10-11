@@ -4,7 +4,7 @@ Oct 9, 2026 · @Juan
 
 | ID | Estado | Fase | Depende de |
 | --- | --- | --- | --- |
-| 00 | Borrador | 0 Fundamentos | Ninguna |
+| 00 | Aprobada | 0 Fundamentos | Ninguna |
 
 ## Propósito y uso
 
@@ -37,8 +37,8 @@ El stack es nativo de Android: Kotlin, Jetpack Compose, Material 3 y Room 3 para
 | Diseño | Material 3 (`androidx.compose.material3`) y los componentes que trae | Decidido |
 | Persistencia | Room 3 (`androidx.room3`) con KSP, base de datos local en el dispositivo | Decidido |
 | Asincronía | Coroutines y Flow | Decidido el 2026-10-10 |
-| Navegación | Navigation para Compose | Propuesto |
-| Build | Gradle con Kotlin DSL y version catalog | Propuesto |
+| Navegación | Navigation 3 (`androidx.navigation3`), según ADR-30-10 | Decidido el 2026-10-11 |
+| Build | Gradle con Kotlin DSL y version catalog, según ADR-30-11 | Decidido el 2026-10-11 |
 | Inyección de dependencias | Manual con un `AppContainer` creado en una `Application` propia | Decidido el 2026-10-10 |
 | Idioma | Identificadores de código en inglés y textos de la interfaz en español | Decidido el 2026-10-10 |
 | Calidad de código | Solo el lint integrado de Android, sin ktlint ni detekt por ahora. Agregar una herramienta exige un ADR | Decidido el 2026-10-10 |
@@ -94,7 +94,7 @@ Estas convenciones valen para todo el código del proyecto. Las specs específic
 - Los composables no contienen lógica de negocio ni acceden a Room.
 - Los modelos de dominio no dependen de Android ni de Room.
 - Las versiones de librerías viven solo en `gradle/libs.versions.toml`.
-- Cada funcionalidad nueva vive en su propio paquete dentro de `feature/`.
+- Cada funcionalidad nueva vive en su propio paquete dentro de `feature/`. Las piezas compartidas viven fuera de `feature/`: el shell en `ui/`, el tema en `ui/theme/` y la base de datos compartida en `data/` (ADR-30-03).
 - Los textos visibles para el usuario van en recursos de strings, no escritos dentro del código.
 - Los identificadores de código (clases, funciones, propiedades y paquetes) se escriben en inglés. Los textos de la interfaz se escriben en español en `strings.xml`.
 
@@ -162,10 +162,12 @@ Enmiendas aprobadas:
 - **2026-10-10.** El dueño agrega la regla 8 para agentes: commits con Conventional Commits y sin atribución a una IA.
 - **2026-10-10.** Al aprobar la Spec 20, el dueño cierra la inyección de dependencias (manual, con un `AppContainer` creado en una `Application` propia) y pasa "Asincronía: Coroutines y Flow" de Propuesto a Decidido. Specs revisadas: 03, 10 y 20.
 - **2026-10-11.** El dueño agrega la regla 9 para agentes: las skills de Android instaladas son la referencia de buenas prácticas, y sus choques con una spec se proponen como cambio a la spec.
+- **2026-10-11.** Al aprobar la Spec 30, el dueño pasa "Navegación" a Navigation 3 (`androidx.navigation3`, ADR-30-10) y "Build" de Propuesto a Decidido (ADR-30-11). Las convenciones de código aclaran que el shell, el tema y la base de datos compartida viven fuera de `feature/` (ADR-30-03), y la decisión de inyección de dependencias apunta a ADR-30-04. Specs revisadas: 03, 10, 20 y 30.
+- **2026-10-11.** El dueño aprueba la constitución: pasa de Borrador a Aprobada.
 
 Decisiones:
 
-- [x] **Inyección de dependencias.** Decidido el 2026-10-10 en la Spec 20: manual, con un `AppContainer` creado en una `Application` propia. La Spec 30 lo registra en su ADR.
+- [x] **Inyección de dependencias.** Decidido el 2026-10-10 en la Spec 20: manual, con un `AppContainer` creado en una `Application` propia. La Spec 30 lo registra en ADR-30-04.
 - [x] **Idioma del código y de la interfaz.** Decidido el 2026-10-10: identificadores de código en inglés y textos de la app en español, en `strings.xml`.
 - [x] **Calidad de código.** Decidido el 2026-10-10: ninguna herramienta adicional por ahora, solo el lint integrado de Android. ktlint, detekt u otra se pueden agregar después con un ADR.
 - [ ] **Registro de fallos del agente.** Dónde vive y con qué formato.

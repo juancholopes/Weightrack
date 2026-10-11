@@ -311,7 +311,7 @@ SELECT * FROM exercise WHERE normalized_name = :normalizedName
 
 ## Repositorios
 
-La Spec 10 dejó las interfaces de repositorio a la Spec 30, que todavía no existe. Para que esta spec sea implementable, define interfaces mínimas en los paquetes de dominio. El dueño las aprobó el 2026-10-10; la Spec 30 puede reemplazarlas con un ADR.
+La Spec 10 dejó las interfaces de repositorio a la Spec 30, que no existía al escribir esta spec. Para que esta spec fuera implementable, define interfaces mínimas en los paquetes de dominio. El dueño las aprobó el 2026-10-10, y la Spec 30 las mantiene como contrato desde el 2026-10-11 (ADR-30-05).
 
 | ID | Requisito |
 | --- | --- |
@@ -425,7 +425,7 @@ Lo pide S01-A05. Completa la tabla de la Spec 10 para la persistencia.
 ## Fuera de alcance de esta spec
 
 - Pantallas, ViewModels, estado de UI y textos: Specs 40 a 42 y specs F.
-- Casos de uso y la forma final de los repositorios: Spec 30. Esta spec solo propone interfaces mínimas.
+- Casos de uso y la forma final de los repositorios: Spec 30. Esta spec solo propone interfaces mínimas, y la Spec 30 las mantiene (ADR-30-05).
 - Implementación de las features F00 a F04.
 - Modularización en varios módulos Gradle, salvo que el dueño elija la opción C con su ADR.
 - Copias de seguridad, exportación o importación como funciones de la app (S01).
@@ -503,7 +503,7 @@ Todas cerradas por el dueño el 2026-10-10.
 
 ## Cambios que esta spec pide a otras specs
 
-Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03 y 10 se aplicaron el 2026-10-10 con la aprobación del dueño. Las de las Specs 30 y 31 quedan pendientes hasta que esas specs existan.
+Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03 y 10 se aplicaron el 2026-10-10 con la aprobación del dueño. La de la Spec 30 se aplicó el 2026-10-11, al aprobarse esa spec. La de la Spec 31 queda pendiente hasta que esa spec exista.
 
 | Spec | Cambio propuesto | Motivo |
 | --- | --- | --- |
@@ -513,7 +513,7 @@ Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de
 | 03 Configuración | Agregar al esqueleto de paquetes `data/` en la raíz (base de datos y conversores compartidos) y la ubicación de `AppContainer` y `WeightrackApplication`. | La base de datos es de todas las features y no cabe en `feature/<feature>/data`. |
 | 10 Modelo de dominio | Aclarar S10-R16 sobre `kotlinx.coroutines` (ver "Decisiones abiertas"). | Las interfaces de repositorio en el dominio devuelven `Flow`. |
 | 10 Modelo de dominio | Registrar la convención `id = 0` para objetos no guardados y que `normalized_name` de la Spec 20 depende de `normalizeExerciseName` y `nameKey`. Si la Spec 30 separa módulos, `nameKey` (hoy `internal`) tendría que ser público. | Mantener una sola normalización (S20-R12). |
-| 30 Arquitectura | Partir de las interfaces de S20-R42 o reemplazarlas, y registrar la decisión de inyección manual. | La Spec 10 le dejó las interfaces a la Spec 30. |
+| 30 Arquitectura | Partir de las interfaces de S20-R42 o reemplazarlas, y registrar la decisión de inyección manual. Aplicado el 2026-10-11: las interfaces se mantienen (ADR-30-05) y la inyección manual queda registrada (ADR-30-04). | La Spec 10 le dejó las interfaces a la Spec 30. |
 | 31 Estrategia de pruebas | Recoger la decisión de dónde corren las pruebas de base de datos. | Afecta al comando único de S03-R14. |
 
 ## Fuentes

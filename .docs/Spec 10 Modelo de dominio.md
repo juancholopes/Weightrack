@@ -10,7 +10,7 @@ Oct 10, 2026 · @Juan
 
 Esta spec diseña el modelo de dominio de Weightrack: las entidades, sus atributos, sus relaciones, sus invariantes y las preguntas que el dominio debe saber responder.
 
-Diseña el dominio, no las tablas. Cómo se guarda cada entidad en Room 3, sus claves, índices y migraciones lo decide la Spec 20. Los casos de uso y las interfaces de repositorio los decide la Spec 30. El dominio vive hoy en `com.juancholopes.weightrack.feature.catalog.domain` (`Exercise`, `ExerciseMuscle`, `Equipment`, `Muscle`) y `com.juancholopes.weightrack.feature.session.domain` (`WorkoutSession`, `ExerciseSet`). La Spec 30 puede moverlo con un ADR. Esta spec solo fija qué preguntas deben poder responder esos repositorios.
+Diseña el dominio, no las tablas. Cómo se guarda cada entidad en Room 3, sus claves, índices y migraciones lo decide la Spec 20. Los casos de uso y las interfaces de repositorio los decide la Spec 30: se mantienen las interfaces de S20-R42 (ADR-30-05). El dominio vive en `com.juancholopes.weightrack.feature.catalog.domain` (`Exercise`, `ExerciseMuscle`, `Equipment`, `Muscle`) y `com.juancholopes.weightrack.feature.session.domain` (`WorkoutSession`, `ExerciseSet`), y se queda ahí (ADR-30-03). El reloj de S10-R32 lo expone el `AppContainer` (ADR-30-09). Esta spec solo fija qué preguntas deben poder responder esos repositorios.
 
 Los nombres siguen la Spec 02: identificadores en inglés y términos en español en specs e interfaz. Las decisiones de esta spec las tomó el dueño el 2026-10-10.
 
@@ -148,7 +148,7 @@ Toda creación o edición respeta estas reglas. Una operación que las rompa se 
 | S10-R15 | Límites superiores: nombre de ejercicio de hasta 60 caracteres, notas de hasta 500 caracteres, repeticiones hasta 999 y peso hasta 1000 kg (`weightGrams <= 1_000_000`). |
 | S10-R16 | El código del modelo de dominio no importa paquetes `android.*`, `androidx.*` (incluidos Room y Compose) ni librerías de terceros. Solo usa Kotlin, el JDK y `kotlinx.coroutines`, incluido `Flow` (enmienda del 2026-10-10, Spec 20). |
 
-Dependencia de la Spec 20 sobre S10-R04 y S10-R05: la columna `normalized_name` de la tabla `exercise` se calcula con las funciones del dominio `normalizeExerciseName` y `nameKey` (S20-R12), no con una copia. Cambiar cualquiera de las dos cambia la clave de unicidad guardada y exige una migración en la Spec 20. Si la Spec 30 separa módulos, `nameKey` (hoy `internal`) tendría que ser público.
+Dependencia de la Spec 20 sobre S10-R04 y S10-R05: la columna `normalized_name` de la tabla `exercise` se calcula con las funciones del dominio `normalizeExerciseName` y `nameKey` (S20-R12), no con una copia. Cambiar cualquiera de las dos cambia la clave de unicidad guardada y exige una migración en la Spec 20. `nameKey` sigue `internal` porque la Spec 30 mantiene un solo módulo (ADR-30-02). Separar módulos exigiría hacerlo público.
 
 Por qué `order` no es contiguo: el orden solo sirve para mostrar las series en el orden en que se hicieron. Exigir que sea contiguo obligaría a reescribir las demás series cada vez que se borra una, sin ningún beneficio para las preguntas del dominio.
 
@@ -198,7 +198,7 @@ Lo pide S01-A05. La Spec 20 completa esta tabla para la persistencia.
 ## Fuera de alcance de esta spec
 
 - Tablas, claves, índices, DAOs y migraciones: Spec 20.
-- Casos de uso, interfaces de repositorio, inyección de dependencias y cambios de paquete: Spec 30.
+- Casos de uso, interfaces de repositorio, inyección de dependencias y cambios de paquete: Spec 30. El dominio se queda en su paquete (ADR-30-03), las interfaces de S20-R42 se mantienen (ADR-30-05), el reloj de S10-R32 viene del `AppContainer` (ADR-30-09) y `nameKey` sigue `internal` porque hay un solo módulo (ADR-30-02).
 - Pantallas, textos y flujos: Specs 40 a 42 y specs F.
 - Rutinas, mediciones corporales y gráficas de progreso: visión a futuro de la Spec 01.
 
@@ -243,3 +243,4 @@ S10-R10, S10-R13 y S10-R14 se comprueban también en la Spec 20, porque dependen
 - [x] **Fechas futuras.** Decidido el 2026-10-10: no se permiten (S10-R32).
 - [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: S10-R16 permite `kotlinx.coroutines`, un objeto no guardado lleva `id = 0` y `normalized_name` de la Spec 20 depende de `normalizeExerciseName` y `nameKey`.
 - [x] **Última vez desde una sesión en curso.** Confirmado el 2026-10-10: S10-R26 excluye la sesión en curso y las posteriores a ella.
+- [x] **Ajustes por la Spec 30.** Aprobado el 2026-10-11: el dominio se queda en su paquete (ADR-30-03), las interfaces de S20-R42 se mantienen (ADR-30-05), el reloj de S10-R32 viene del `AppContainer` (ADR-30-09) y `nameKey` sigue `internal` (ADR-30-02).

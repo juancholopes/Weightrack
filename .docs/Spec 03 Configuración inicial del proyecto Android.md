@@ -79,19 +79,24 @@ Qué le toca a cada spec:
 | S03-R12 | `MainActivity` mantiene `enableEdgeToEdge()`. |
 | S03-R17 | Los identificadores de código (clases, funciones, propiedades y paquetes) están en inglés. Los textos visibles están en español en `res/values/strings.xml`. |
 
-Esqueleto de paquetes bajo `com.juancholopes.weightrack`. Los nombres de paquete van en inglés, en minúsculas y sin guiones bajos, por ejemplo `feature/catalog` o `feature/session`. El nombre exacto de cada feature y el reparto fino entre capas los decide la Spec 30.
+Esqueleto de paquetes bajo `com.juancholopes.weightrack`. Los nombres de paquete van en inglés, en minúsculas y sin guiones bajos, por ejemplo `feature/catalog` o `feature/session`. El árbol y los nombres de feature los fija la Spec 30 (S30-R05 y S30-R06), y la composición de cada pantalla, S30-R12.
 
 ```
 com/juancholopes/weightrack/
-  MainActivity.kt
+  MainActivity.kt           única Activity: enableEdgeToEdge() y el shell
   WeightrackApplication.kt  Application propia, crea el AppContainer (Spec 20)
-  AppContainer.kt        inyección manual: construye la base de datos y los repositorios (Spec 20)
-  data/                  base de datos y conversores compartidos por las features (Spec 20)
-  ui/theme/              tema Material 3 compartido
-  feature/<feature>/
-    ui/                  pantalla, ViewModel y estado de UI
-    domain/              modelos, reglas e interfaces de repositorio
-    data/                implementación con Room 3
+  AppContainer.kt           inyección manual: construye la base de datos y los repositorios (Spec 20)
+  data/                     base de datos y conversores compartidos por las features (Spec 20)
+  ui/                       shell de F00: composable raíz y navegación
+    theme/                  tema Material 3 compartido
+  feature/
+    catalog/                F01
+      domain/               modelos, reglas, interfaces de repositorio y casos de uso compartidos
+      data/                 implementación con Room 3, solo si la feature es dueña de tablas
+      ui/                   por pantalla: <Nombre>Screen, <Nombre>Content, <Nombre>ViewModel y <Nombre>UiState
+    session/                F02: domain/, data/ y ui/
+    lastperformance/        F03: solo ui/
+    history/                F04: solo ui/
 ```
 
 ### Build, entorno y repositorio
@@ -143,6 +148,7 @@ com/juancholopes/weightrack/
 - [x] **Calidad de código.** Decidido el 2026-10-10 en la constitución: ninguna herramienta adicional por ahora, solo el lint integrado de Android (S03-R19). Si se adopta una, entra con su propio ADR.
 - [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: KSP y el plugin `androidx.room3` se aplican en `:app` (S03-R06, S03-A04), el esqueleto suma `data/`, `AppContainer` y `WeightrackApplication`, y las pruebas de base de datos corren aparte con `./gradlew connectedAndroidTest` (S03-R14).
 - [x] **Respaldo automático de Android.** Decidido el 2026-10-10: `allowBackup="true"` se mantiene con las reglas por defecto. El respaldo del sistema a la cuenta de Google del usuario se acepta como excepción a S01-R05, que se refiere a funciones de la app (S03-R18).
+- [x] **Ajustes por la Spec 30.** Aprobado el 2026-10-11: el esqueleto de paquetes sigue el árbol de ADR-30-03, con los nombres de feature, el `ui/` raíz del shell y la composición de cada pantalla (S30-R05, S30-R06 y S30-R12).
 
 ## Fuentes
 
