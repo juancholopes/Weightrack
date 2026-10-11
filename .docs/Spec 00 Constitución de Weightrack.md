@@ -151,6 +151,7 @@ El roadmap va de lo general a lo específico y cada spec declara de cuáles depe
 | F02 | Registrar sesión y series | 4 Features | F01 |
 | F03 | Última vez por ejercicio | 4 Features | F02 |
 | F04 | Historial de sesiones | 4 Features | F02 |
+| F05 | Estadísticas por ejercicio | 4 Features | F02 |
 
 ## Cambios a esta constitución y decisiones abiertas
 
@@ -164,6 +165,7 @@ Enmiendas aprobadas:
 - **2026-10-11.** El dueño agrega la regla 9 para agentes: las skills de Android instaladas son la referencia de buenas prácticas, y sus choques con una spec se proponen como cambio a la spec.
 - **2026-10-11.** Al aprobar la Spec 30, el dueño pasa "Navegación" a Navigation 3 (`androidx.navigation3`, ADR-30-10) y "Build" de Propuesto a Decidido (ADR-30-11). Las convenciones de código aclaran que el shell, el tema y la base de datos compartida viven fuera de `feature/` (ADR-30-03), y la decisión de inyección de dependencias apunta a ADR-30-04. Specs revisadas: 03, 10, 20 y 30.
 - **2026-10-11.** El dueño aprueba la constitución: pasa de Borrador a Aprobada.
+- **2026-10-11.** El dueño agrega F05 Estadísticas por ejercicio al mapa de specs: las gráficas de progreso pasan de la visión a futuro a la primera versión. Specs revisadas: 01, 02 y 10.
 
 Decisiones:
 

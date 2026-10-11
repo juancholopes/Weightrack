@@ -4,7 +4,7 @@ Oct 10, 2026 · @Juan
 
 | ID | Estado | Fase | Depende de |
 | --- | --- | --- | --- |
-| 02 | Borrador | 0 Fundamentos | 00 |
+| 02 | Aprobada | 0 Fundamentos | 00 |
 
 ## Propósito
 
@@ -42,7 +42,7 @@ Los términos de la primera versión cubren las features F00 a F04 de la Spec 01
 | Peso | El peso externo usado en una serie, en kilogramos con precisión de 0,25 kg. En un ejercicio de peso corporal es el peso adicional, y vale 0 cuando no hay. Nunca es negativo. | `weightGrams` | Decidido el 2026-10-10: se guarda como entero de gramos, múltiplo de 250, para no perder precisión. La interfaz siempre lo muestra en kilogramos, por ejemplo 62500 → "62,5 kg". No es el peso corporal (ver Medición corporal). |
 | Repeticiones | Cuántas veces se ejecutó el movimiento en una serie. Es un número entero mayor que 0. | `reps` | Ejemplo: 10. |
 | Última vez | Todas las series de un ejercicio en la sesión más reciente que lo contiene, en el orden en que se registraron, mostradas al registrarlo de nuevo. | `LastPerformance` | Decidido el 2026-10-10. Lo implementa F03 y cumple S01-R03. Se calcula a partir de las series guardadas, no se guarda aparte. |
-| Evolución | Todas las series de un ejercicio con la fecha de su sesión, ordenadas en el tiempo. | `ExerciseEvolution` | Definido en la Spec 10. Es la consulta en la que se apoyarán las gráficas de progreso futuras. |
+| Evolución | Todas las series de un ejercicio con la fecha de su sesión, ordenadas en el tiempo. | `ExerciseEvolution` | Definido en la Spec 10. Es la consulta en la que se apoyan las gráficas de F05. |
 | Historial | El conjunto de sesiones pasadas del usuario, que puede listar, ver, corregir y eliminar. | `SessionHistory` | Lo implementa F04 y cumple S01-R04. |
 | Nota | Un texto libre opcional que el usuario escribe. Hay solo dos tipos: la nota fija de un ejercicio y la nota de una sesión. | `Exercise.notes`, `WorkoutSession.notes` | Decidido el 2026-10-10. La nota del ejercicio la implementa F01 (ejemplo: "Asiento en la posición 4"). La nota de la sesión la implementa F02 (ejemplo: "Me sentí cansado"). No hay nota por serie ni nota del ejercicio dentro de una sesión. |
 
@@ -52,7 +52,7 @@ Términos de la visión a futuro. Se definen para reservar el nombre y evitar co
 | --- | --- | --- | --- |
 | Rutina | Un plan de ejercicios definido de antemano que se usa para iniciar una sesión. | `Routine` | Futuro, no se implementa. Una rutina no es una sesión: la rutina es el plan, la sesión es lo que se hizo. |
 | Medición corporal | Un registro del peso corporal o de una medida del cuerpo en una fecha. | `BodyMeasurement` | Futuro, no se implementa. El peso corporal nunca se llama "peso" a secas. |
-| Gráfica de progreso | Una vista de la evolución del peso y las repeticiones de un ejercicio en el tiempo. | `ProgressChart` | Futuro, no se implementa. Se alimenta de las series guardadas (S01-R06). |
+| Gráfica de progreso | Una vista de la evolución del peso y las repeticiones de un ejercicio en el tiempo. | `ProgressChart` | Se implementa en F05 Estadísticas por ejercicio (S01-R12). Se alimenta de las series guardadas (S01-R06). |
 
 ## Términos del proceso
 

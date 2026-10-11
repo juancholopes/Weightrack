@@ -200,7 +200,7 @@ Lo pide S01-A05. La Spec 20 completa esta tabla para la persistencia.
 - Tablas, claves, índices, DAOs y migraciones: Spec 20.
 - Casos de uso, interfaces de repositorio, inyección de dependencias y cambios de paquete: Spec 30. El dominio se queda en su paquete (ADR-30-03), las interfaces de S20-R42 se mantienen (ADR-30-05), el reloj de S10-R32 viene del `AppContainer` (ADR-30-09) y `nameKey` sigue `internal` porque hay un solo módulo (ADR-30-02).
 - Pantallas, textos y flujos: Specs 40 a 42 y specs F.
-- Rutinas, mediciones corporales y gráficas de progreso: visión a futuro de la Spec 01.
+- Rutinas y mediciones corporales: visión a futuro de la Spec 01. Las gráficas de progreso pasan a F05 (Spec 01, 2026-10-11) y usan la evolución de S10-R27.
 
 ## Criterios de aceptación
 
