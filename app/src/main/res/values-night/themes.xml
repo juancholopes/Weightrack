@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark window background while Compose starts, so dark mode does not flash light (S41-R04). -->
+    <style name="Theme.Weightrack" parent="android:Theme.Material.NoActionBar" />
+</resources>

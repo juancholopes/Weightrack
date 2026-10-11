@@ -1,58 +1,99 @@
 package com.juancholopes.weightrack.ui.theme
 
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+/**
+ * Tokens Material 3 does not have (D1): they travel together through [LocalWeightrackTokens].
+ * Colors, text typography and shapes live in `MaterialTheme`.
+ */
+@Immutable
+data class WeightrackTokens(
+    val direction: VisualDirection,
+    val spacing: Spacing,
+    val numbers: NumberStyles,
+    val motion: MotionTokens,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+/** Builds the tokens of a [direction]; with [reducedMotion], its motion for reduced motion (S41-R10). */
+fun weightrackTokens(direction: VisualDirection, reducedMotion: Boolean = false): WeightrackTokens = WeightrackTokens(
+    direction = direction,
+    spacing = direction.spacing,
+    numbers = numberStyles(direction.numbers),
+    motion = if (reducedMotion) direction.motion.forReducedMotion() else direction.motion,
 )
 
+val LocalWeightrackTokens = staticCompositionLocalOf { weightrackTokens(DefaultDirection) }
+
+/**
+ * The only entry point of the theme (S41-R02). `MainActivity` wraps the shell with it and every preview
+ * does too.
+ *
+ * @param darkTheme follows the system; there is no in-app selector (S41-R04).
+ * @param dynamicColor Material You dynamic color on API 31+; the fallback scheme otherwise (S41-R03).
+ * @param direction the visual preset; the app uses [DefaultDirection] (S41-R20).
+ */
 @Composable
 fun WeightrackTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    direction: VisualDirection = DefaultDirection,
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val context = LocalContext.current
+    // selectColorScheme calls these providers only on API 31+ (ColorSchemesTest).
+    @SuppressLint("NewApi")
+    val dynamicLight = { dynamicLightColorScheme(context) }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+    @SuppressLint("NewApi")
+    val dynamicDark = { dynamicDarkColorScheme(context) }
+    val colorScheme = selectColorScheme(
+        sdkInt = Build.VERSION.SDK_INT,
+        dynamicColor = dynamicColor,
+        darkTheme = darkTheme,
+        dynamicLight = dynamicLight,
+        dynamicDark = dynamicDark,
     )
+    val reducedMotion = rememberReducedMotion()
+    val tokens = remember(direction, reducedMotion) { weightrackTokens(direction, reducedMotion) }
+    val typography = remember(direction.textWidth) { weightrackTypography(direction.textWidth) }
+
+    CompositionLocalProvider(LocalWeightrackTokens provides tokens) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = direction.shapes,
+            typography = typography,
+            content = content,
+        )
+    }
+}
+
+/** Readers of the Weightrack tokens, like `MaterialTheme.colorScheme`: `WeightrackTheme.spacing.l`. */
+object WeightrackTheme {
+    val direction: VisualDirection
+        @Composable @ReadOnlyComposable
+        get() = LocalWeightrackTokens.current.direction
+
+    val spacing: Spacing
+        @Composable @ReadOnlyComposable
+        get() = LocalWeightrackTokens.current.spacing
+
+    val numbers: NumberStyles
+        @Composable @ReadOnlyComposable
+        get() = LocalWeightrackTokens.current.numbers
+
+    val motion: MotionTokens
+        @Composable @ReadOnlyComposable
+        get() = LocalWeightrackTokens.current.motion
 }
