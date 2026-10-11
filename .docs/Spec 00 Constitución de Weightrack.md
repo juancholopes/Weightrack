@@ -36,10 +36,10 @@ El stack es nativo de Android: Kotlin, Jetpack Compose, Material 3 y Room 3 para
 | UI | Jetpack Compose con la BOM estable más reciente (línea 1.12 en agosto de 2026) | Decidido |
 | Diseño | Material 3 (`androidx.compose.material3`) y los componentes que trae | Decidido |
 | Persistencia | Room 3 (`androidx.room3`) con KSP, base de datos local en el dispositivo | Decidido |
-| Asincronía | Coroutines y Flow | Propuesto |
+| Asincronía | Coroutines y Flow | Decidido el 2026-10-10 |
 | Navegación | Navigation para Compose | Propuesto |
 | Build | Gradle con Kotlin DSL y version catalog | Propuesto |
-| Inyección de dependencias | Se resuelve con un ADR en la Spec 30 | Abierto |
+| Inyección de dependencias | Manual con un `AppContainer` creado en una `Application` propia | Decidido el 2026-10-10 |
 | Idioma | Identificadores de código en inglés y textos de la interfaz en español | Decidido el 2026-10-10 |
 | Calidad de código | Solo el lint integrado de Android, sin ktlint ni detekt por ahora. Agregar una herramienta exige un ADR | Decidido el 2026-10-10 |
 
@@ -84,6 +84,7 @@ Un agente implementa solo lo que está escrito en la spec vigente.
 6. Entregar evidencia de cada criterio de aceptación: un comando, una prueba o una captura.
 7. Anotar cada fallo propio en el registro de fallos del agente.
 8. Hacer commits solo cuando el dueño lo pida, con Conventional Commits (`feat:`, `fix:`, `docs:`, etc.) y sin ninguna atribución a una IA: nada de `Co-Authored-By` ni menciones a un agente o modelo.
+9. Usar las skills de Android instaladas en `.claude/skills/` como referencia de buenas prácticas y leer las que apliquen antes de trabajar. Si una skill choca con una spec, el agente no la ignora ni la aplica por su cuenta: la registra como propuesta de cambio a la spec, con su motivo, y el dueño decide.
 
 ## Convenciones de código
 
@@ -159,10 +160,12 @@ Enmiendas aprobadas:
 
 - **2026-10-10.** El dueño cierra dos decisiones abiertas: el idioma (código en inglés, interfaz en español) y la calidad de código (solo el lint integrado de Android). Se agregan a la tabla de decisiones técnicas y a las convenciones de código. Specs revisadas: 02, 03 y 10.
 - **2026-10-10.** El dueño agrega la regla 8 para agentes: commits con Conventional Commits y sin atribución a una IA.
+- **2026-10-10.** Al aprobar la Spec 20, el dueño cierra la inyección de dependencias (manual, con un `AppContainer` creado en una `Application` propia) y pasa "Asincronía: Coroutines y Flow" de Propuesto a Decidido. Specs revisadas: 03, 10 y 20.
+- **2026-10-11.** El dueño agrega la regla 9 para agentes: las skills de Android instaladas son la referencia de buenas prácticas, y sus choques con una spec se proponen como cambio a la spec.
 
 Decisiones:
 
-- [ ] **Inyección de dependencias.** Hilt, Koin o manual, decidido en la Spec 30.
+- [x] **Inyección de dependencias.** Decidido el 2026-10-10 en la Spec 20: manual, con un `AppContainer` creado en una `Application` propia. La Spec 30 lo registra en su ADR.
 - [x] **Idioma del código y de la interfaz.** Decidido el 2026-10-10: identificadores de código en inglés y textos de la app en español, en `strings.xml`.
 - [x] **Calidad de código.** Decidido el 2026-10-10: ninguna herramienta adicional por ahora, solo el lint integrado de Android. ktlint, detekt u otra se pueden agregar después con un ADR.
 - [ ] **Registro de fallos del agente.** Dónde vive y con qué formato.

@@ -16,7 +16,7 @@ Los nombres siguen la Spec 02: identificadores en inglés y términos en españo
 
 ## Principios del modelo
 
-- **Dominio puro.** El modelo usa solo Kotlin y la biblioteca estándar del JDK, por ejemplo `java.time.LocalDate`. No conoce Android, Room ni Compose (constitución, principio 4).
+- **Dominio puro.** El modelo usa solo Kotlin, la biblioteca estándar del JDK, por ejemplo `java.time.LocalDate`, y `kotlinx.coroutines` (por ejemplo `Flow` en las interfaces de repositorio). No conoce Android, Room ni Compose (constitución, principio 4).
 - **Sin textos de interfaz.** Los enums no guardan etiquetas en español. Cada valor tiene su etiqueta en `strings.xml` (constitución, convenciones de código). Las etiquetas se agregan con la primera feature que las muestra, F01, para no dejar textos sin usar.
 - **Nada se resume.** Cada serie es un registro propio. "Última vez" y "Evolución" se calculan a partir de las series, no se guardan aparte (S01-R06).
 - **Peso exacto.** El peso se representa como un entero de gramos para no perder precisión con números de coma flotante.
@@ -36,6 +36,8 @@ Un movimiento que el usuario entrena y del que registra el peso. Pertenece al ca
 | `archived` | `Boolean` | — | Sí | `false` al crear. Ver reglas de archivado. |
 
 Los músculos de un ejercicio se describen con `ExerciseMuscle`.
+
+**Objeto no guardado.** Decidido el 2026-10-10: un objeto que todavía no se guardó lleva `id = 0`, y sus hijos llevan `exerciseId = 0` o `sessionId = 0`. Al guardarlo, la Spec 20 ignora ese valor y usa el id que asigna la base de datos (S20-R17).
 
 ### ExerciseMuscle (Músculo del ejercicio)
 
@@ -144,7 +146,9 @@ Toda creación o edición respeta estas reglas. Una operación que las rompa se 
 | S10-R13 | La fecha de una sesión es un día del calendario (`LocalDate`), obligatoria, sin hora. |
 | S10-R14 | Los `id` se asignan al crear y no cambian. El `id` de `WorkoutSession` crece en orden de creación: una sesión creada después tiene un `id` mayor. La Spec 20 garantiza esta propiedad al persistir. |
 | S10-R15 | Límites superiores: nombre de ejercicio de hasta 60 caracteres, notas de hasta 500 caracteres, repeticiones hasta 999 y peso hasta 1000 kg (`weightGrams <= 1_000_000`). |
-| S10-R16 | El código del modelo de dominio no importa paquetes `android.*`, `androidx.*` (incluidos Room y Compose) ni librerías de terceros. Solo usa Kotlin y el JDK. |
+| S10-R16 | El código del modelo de dominio no importa paquetes `android.*`, `androidx.*` (incluidos Room y Compose) ni librerías de terceros. Solo usa Kotlin, el JDK y `kotlinx.coroutines`, incluido `Flow` (enmienda del 2026-10-10, Spec 20). |
+
+Dependencia de la Spec 20 sobre S10-R04 y S10-R05: la columna `normalized_name` de la tabla `exercise` se calcula con las funciones del dominio `normalizeExerciseName` y `nameKey` (S20-R12), no con una copia. Cambiar cualquiera de las dos cambia la clave de unicidad guardada y exige una migración en la Spec 20. Si la Spec 30 separa módulos, `nameKey` (hoy `internal`) tendría que ser público.
 
 Por qué `order` no es contiguo: el orden solo sirve para mostrar las series en el orden en que se hicieron. Exigir que sea contiguo obligaría a reescribir las demás series cada vez que se borra una, sin ningún beneficio para las preguntas del dominio.
 
@@ -237,4 +241,5 @@ S10-R10, S10-R13 y S10-R14 se comprueban también en la Spec 20, porque dependen
 - [x] **Representación del peso.** Decidido el 2026-10-10: kilogramos con precisión de 0,25 kg, guardados como entero de gramos (`weightGrams`).
 - [x] **Límites superiores.** Aprobados el 2026-10-10 tal como están en S10-R15.
 - [x] **Fechas futuras.** Decidido el 2026-10-10: no se permiten (S10-R32).
+- [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: S10-R16 permite `kotlinx.coroutines`, un objeto no guardado lleva `id = 0` y `normalized_name` de la Spec 20 depende de `normalizeExerciseName` y `nameKey`.
 - [x] **Última vez desde una sesión en curso.** Confirmado el 2026-10-10: S10-R26 excluye la sesión en curso y las posteriores a ella.
