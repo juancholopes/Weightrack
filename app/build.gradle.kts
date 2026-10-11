@@ -36,6 +36,10 @@ android {
     buildFeatures {
         compose = true
     }
+    // Spec 31 (D4): repository fakes and their shared contract tests, visible from test and androidTest.
+    testFixtures {
+        enable = true
+    }
 }
 
 room3 {
@@ -58,6 +62,13 @@ dependencies {
     runtimeOnly(libs.kotlinx.serialization.core)
     ksp(libs.androidx.room3.compiler)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testFixturesImplementation(libs.junit)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+    testFixturesImplementation(libs.kotlinx.coroutines.test)
+    // The Compose compiler plugin runs on every Kotlin compilation of :app and needs the runtime (Spec 31).
+    testFixturesImplementation(platform(libs.androidx.compose.bom))
+    testFixturesImplementation(libs.androidx.compose.runtime)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

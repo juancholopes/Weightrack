@@ -389,6 +389,8 @@ Investigado el 2026-10-10 en la documentación de Android Developers:
 
 **Decidido el 2026-10-10: A.** Sigue la guía oficial, prueba el mismo SQLite y driver que usa la app, y no agrega Robolectric ni módulos. El costo es depender de un dispositivo; se puede reducir con un dispositivo administrado por Gradle (Gradle Managed Devices), que también tendría que aprobarse. Los mappers y conversores siguen en `src/test` (S20-R47).
 
+**Contrato de los repositorios (Spec 31, 2026-10-11).** `RoomExerciseRepositoryContractTest` y `RoomSessionRepositoryContractTest`, en `src/androidTest`, corren contra los repositorios Room el mismo contrato que cumplen los fakes de `src/testFixtures` (S31-R07), con una base en memoria nueva por prueba y el driver de producción (S20-R46). Las pruebas de esta spec no cambian.
+
 ## Dependencias
 
 Versiones verificadas el 2026-10-10. Se agregan a `gradle/libs.versions.toml`.
@@ -476,7 +478,7 @@ Las pruebas de base de datos viven en `src/androidTest` (opción A). Las de mapp
 | S20-A37 | Los paquetes de dominio siguen sin importar Android, Room ni entidades tras agregar las interfaces. | S20-R11, S20-R42, S10-R16 | `grep -rnE "^import (android\|androidx)\." app/src/main/java/com/juancholopes/weightrack/feature/*/domain` sin resultados |
 | S20-A38 | Cada repositorio implementa su interfaz y el `AppContainer` los expone con el tipo de la interfaz. | S20-R07, S20-R43 | Revisión de `AppContainer.kt` y compilación con `./gradlew assembleDebug` |
 | S20-A39 | Esta spec incluye la tabla de cumplimiento de S01-R06 a S01-R09. | S01-A05 | Revisión de esta spec |
-| S20-A40 | Build, pruebas unitarias y pruebas de base de datos pasan desde un clon limpio. | S03-R14, S20-R46, S20-R47 | `./gradlew assembleDebug test`, más `./gradlew connectedAndroidTest` en un dispositivo |
+| S20-A40 | Build, pruebas unitarias y pruebas de base de datos pasan desde un clon limpio. | S03-R14, S20-R46, S20-R47 | `./gradlew assembleDebug test` y, con un dispositivo, `./gradlew assembleDebug test connectedDebugAndroidTest` (S31-R24) |
 
 ## Hechos de la implementación
 
@@ -503,7 +505,7 @@ Todas cerradas por el dueño el 2026-10-10.
 
 ## Cambios que esta spec pide a otras specs
 
-Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03 y 10 se aplicaron el 2026-10-10 con la aprobación del dueño. La de la Spec 30 se aplicó el 2026-10-11, al aprobarse esa spec. La de la Spec 31 queda pendiente hasta que esa spec exista.
+Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03 y 10 se aplicaron el 2026-10-10 con la aprobación del dueño. La de la Spec 30 se aplicó el 2026-10-11, al aprobarse esa spec. La de la Spec 31 se aplicó el 2026-10-11, al aprobarse esa spec.
 
 | Spec | Cambio propuesto | Motivo |
 | --- | --- | --- |
@@ -514,7 +516,7 @@ Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de
 | 10 Modelo de dominio | Aclarar S10-R16 sobre `kotlinx.coroutines` (ver "Decisiones abiertas"). | Las interfaces de repositorio en el dominio devuelven `Flow`. |
 | 10 Modelo de dominio | Registrar la convención `id = 0` para objetos no guardados y que `normalized_name` de la Spec 20 depende de `normalizeExerciseName` y `nameKey`. Si la Spec 30 separa módulos, `nameKey` (hoy `internal`) tendría que ser público. | Mantener una sola normalización (S20-R12). |
 | 30 Arquitectura | Partir de las interfaces de S20-R42 o reemplazarlas, y registrar la decisión de inyección manual. Aplicado el 2026-10-11: las interfaces se mantienen (ADR-30-05) y la inyección manual queda registrada (ADR-30-04). | La Spec 10 le dejó las interfaces a la Spec 30. |
-| 31 Estrategia de pruebas | Recoger la decisión de dónde corren las pruebas de base de datos. | Afecta al comando único de S03-R14. |
+| 31 Estrategia de pruebas | Recoger la decisión de dónde corren las pruebas de base de datos. Aplicado el 2026-10-11: la Spec 31 toma como dada la opción A (S31-R02) y fija el comando completo con `connectedDebugAndroidTest` (S31-R24). | Afecta al comando único de S03-R14. |
 
 ## Fuentes
 

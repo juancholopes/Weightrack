@@ -529,14 +529,14 @@ NavDisplay(
 
 Lo que esta arquitectura deja listo para que otras specs decidan, sin decidirlo aquí.
 
-**Spec 31 (pruebas).**
+**Spec 31 (pruebas).** Aplicado el 2026-10-11: la Spec 31 recoge estas costuras en S31-R04 a S31-R16.
 
 - Cada ViewModel se construye en una prueba de `src/test` con fakes de `ExerciseRepository` o `SessionRepository` y un `Clock.fixed(...)`, sin Room ni emulador (S30-R15).
 - Los casos de uso se prueban igual, con fakes de las interfaces (S30-R19).
 - `<Nombre>Content` permite pruebas de UI y de capturas sin ViewModel (S30-R31).
 - `viewModelScope` usa el dispatcher principal, así que las pruebas de ViewModel necesitan `kotlinx-coroutines-test` en `testImplementation`; hoy solo está en `androidTestImplementation` (Spec 20).
 - La pila de navegación es una lista que posee el shell, así que las pruebas de navegación que pide la skill `testing-setup` (atrás, salida por la pantalla inicial) se pueden escribir contra ella.
-- Dónde viven los fakes, si se usa Robolectric para pruebas de UI (lo sugiere la skill `testing-setup`; la Spec 20 solo lo descartó para la base de datos) y las capturas son decisiones de la Spec 31.
+- Dónde viven los fakes, si se usa Robolectric para pruebas de UI (lo sugiere la skill `testing-setup`; la Spec 20 solo lo descartó para la base de datos) y las capturas son decisiones de la Spec 31. Decididas el 2026-10-11: fakes en `src/testFixtures` (D4), sin Robolectric (D1) y sin capturas en la primera versión (D2).
 
 **Specs 40 a 42 (flujos, diseño y pantallas).**
 
@@ -555,7 +555,7 @@ Por la regla 9, cada choque con una spec se registra como propuesta y el dueño 
 | `adaptive` (2026-09-22) | Pide Navigation 3 como requisito; layouts para tablets, plegables y escritorio | Refuerza D1. No se aplica en la primera versión | No con la arquitectura. La Spec 01 deja fuera las tablets; la skill no aplica hasta que una spec las incluya |
 | `navigation-event` (2026-09-01) | Con Navigation 3, usar su manejo del atrás; `NavigationBackHandler` en lugar de `BackHandler`; un manejador por estado | Costura para la Spec 42 | No |
 | `edge-to-edge` (2026-08-24) | `enableEdgeToEdge()` antes de `setContent`, `adjustResize`, insets con un solo método | Ya se cumple (S03-R12); costura para las Specs 41 y 42 | No |
-| `testing-setup` (2026-09-23) | Si no hay framework de inyección, instalar Hilt; usar fakes de interfaces; probar ViewModels, repositorios y DAOs | Las interfaces del dominio y la inyección manual permiten fakes sin Hilt | Sí, con la inyección manual decidida en la constitución. Resuelto en D4 (A): se mantiene la inyección manual |
+| `testing-setup` (2026-09-23) | Si no hay framework de inyección, instalar Hilt; usar fakes de interfaces; probar ViewModels, repositorios y DAOs; Robolectric para las pruebas de UI, capturas de pantalla y Jacoco | Las interfaces del dominio y la inyección manual permiten fakes sin Hilt. El resto de la estrategia de pruebas está en la Spec 31 | Sí, con la inyección manual decidida en la constitución. Resuelto en D4 (A): se mantiene la inyección manual. Robolectric, capturas y Jacoco quedan resueltos en D1 a D3 de la Spec 31 (2026-10-11) |
 
 ## Dependencias
 
@@ -612,7 +612,7 @@ S30-A01 a S30-A11 se comprueban sobre el código actual y en cada spec posterior
 | S30-A12 | Cada pantalla tiene `<Nombre>Screen`, `<Nombre>Content`, `<Nombre>ViewModel` y `<Nombre>UiState` en `feature/<feature>/ui/`, y `Content` no recibe ViewModel. | S30-R12, S30-R31 | `find <pkg>/feature -path "*/ui/*"` y revisión de cada pantalla |
 | S30-A13 | Ningún ViewModel expone estado mutable ni canales de eventos. | S30-R26, S30-R28 | `grep -rnE "Channel<\|SharedFlow<\|MutableSharedFlow\|LiveData" app/src/main` sin resultados; `grep -rnE "^\s*(val\|var) [A-Za-z_]+ *(:\|=) *MutableStateFlow" <pkg>/feature` sin resultados |
 | S30-A14 | Las pantallas recolectan el estado con `collectAsStateWithLifecycle()`. | S30-R30 | `grep -rnE "collectAsState\(" app/src/main` sin resultados y `collectAsStateWithLifecycle` en cada `*Screen.kt` |
-| S30-A15 | Cada ViewModel tiene al menos una prueba en `src/test` que lo construye con un fake de una interfaz del dominio, sin Room ni emulador, y comprueba el `UiState` después de un evento. | S30-R15, S30-R25 a S30-R27 | Prueba nombrada en la spec F, que corre con `./gradlew test` |
+| S30-A15 | Cada ViewModel tiene al menos una prueba en `src/test` que lo construye con un fake de una interfaz del dominio, sin Room ni emulador, y comprueba el `UiState` después de un evento. | S30-R15, S30-R25 a S30-R27 | Prueba nombrada en la spec F, escrita según S31-R11, que corre con `./gradlew test` |
 | S30-A16 | Los ViewModels no conocen la navegación. | S30-R39 | `grep -lE "^import androidx\.navigation" $(find app/src/main -name "*ViewModel.kt")` sin resultados |
 | S30-A17 | Las claves de navegación viven en `feature/*/ui/`, son `@Serializable` y solo llevan ids o valores simples. | S30-R38, S30-R40 | `grep -rn ": NavKey" app/src/main` solo en rutas `feature/*/ui/`, y revisión de cada clave |
 | S30-A18 | La UI no llama directamente a las escrituras validadas de sesiones y series. | S30-R20 | `grep -rnE "\.(createSession\|updateSession\|addSet\|updateSet)\(" <pkg>/feature/*/ui` sin resultados |
@@ -655,7 +655,7 @@ Todas cerradas por el dueño el 2026-10-11, con la opción recomendada.
 
 ## Cambios que esta spec pide a otras specs
 
-Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03, 10 y 20 se aplicaron el 2026-10-11 con la aprobación del dueño. Las de las Specs 31, 42 y F00 a F04 quedan pendientes hasta que esas specs existan.
+Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de las Specs 00, 03, 10 y 20 se aplicaron el 2026-10-11 con la aprobación del dueño. La de la Spec 31 se aplicó el 2026-10-11, al aprobarse esa spec. Las de las Specs 42 y F00 a F04 quedan pendientes hasta que esas specs existan.
 
 | Spec | Cambio propuesto | Motivo | Estado |
 | --- | --- | --- | --- |
@@ -666,7 +666,7 @@ Esta spec no edita ninguna. El dueño aprueba y aplica cada cambio. Las filas de
 | 03 Configuración | Actualizar el esqueleto de paquetes con el árbol de ADR-30-03: nombres de feature, `ui/` del shell y la composición de cada pantalla (`Screen`, `Content`, `ViewModel`, `UiState`). Reemplazar "El nombre exacto de cada feature y el reparto fino entre capas los decide la Spec 30" por una referencia a S30-R05 y S30-R06. | La Spec 03 dejó esas decisiones a esta spec. | Aplicado el 2026-10-11 |
 | 10 Modelo de dominio | En "Propósito" y "Fuera de alcance", anotar que el dominio se queda donde está (ADR-30-03), que las interfaces de S20-R42 se mantienen (ADR-30-05) y que el reloj de S10-R32 viene del `AppContainer` (ADR-30-09). La nota sobre `nameKey` queda resuelta: sigue `internal` porque hay un solo módulo (ADR-30-02). | La Spec 10 dejó esas decisiones a esta spec. | Aplicado el 2026-10-11 |
 | 20 Persistencia | Marcar como aplicada su fila "30 Arquitectura" de "Cambios que esta spec pide a otras specs": las interfaces se mantienen (ADR-30-05) y la inyección manual queda registrada (ADR-30-04). | Cerrar el pendiente de la Spec 20. | Aplicado el 2026-10-11 |
-| 31 Estrategia de pruebas | Recoger las costuras de "Costuras para otras specs": ViewModels y casos de uso con fakes de las interfaces y `Clock.fixed`, `kotlinx-coroutines-test` en `testImplementation` con `Dispatchers.setMain`, pruebas de UI sobre `<Nombre>Content` y pruebas de navegación sobre la pila del shell. Decidir dónde viven los fakes. | S30-A15 necesita la infraestructura de pruebas de la Spec 31. | Pendiente: se aplica al escribir esa spec |
+| 31 Estrategia de pruebas | Recoger las costuras de "Costuras para otras specs": ViewModels y casos de uso con fakes de las interfaces y `Clock.fixed`, `kotlinx-coroutines-test` en `testImplementation` con `Dispatchers.setMain`, pruebas de UI sobre `<Nombre>Content` y pruebas de navegación sobre la pila del shell. Decidir dónde viven los fakes. | S30-A15 necesita la infraestructura de pruebas de la Spec 31. | Aplicado el 2026-10-11 |
 | 42 Pantallas y navegación | Usar claves por feature con solo ids (S30-R38), lambdas de navegación (S30-R39), entradas por feature (S30-R40); decidir una o varias pilas y la pantalla inicial; decidir el hueco de la última vez en la pantalla de F02 (D2); decidir `NavigationBackHandler` para cambios sin guardar y `android:enableOnBackInvokedCallback` para API 33 a 35. | Costuras de navegación de ADR-30-10. | Pendiente: se aplica al escribir esa spec |
 | F00 a F04 | Citar los requisitos de esta spec que aplican y presentar la evidencia de S30-A12 a S30-A19 y S30-A22 (S30-R03). F00 agrega las dependencias aprobadas de navegación y Lifecycle; F02 agrega el reloj al `AppContainer` y los casos de uso de sesiones y series. | Aplicar la arquitectura en cada corte vertical. | Pendiente: se aplica al escribir esa spec |
 

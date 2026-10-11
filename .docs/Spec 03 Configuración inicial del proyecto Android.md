@@ -29,7 +29,8 @@ Lo que generó Android Studio, comparado con lo que exige la constitución. Las 
 | `core-ktx` | 1.10.1 | 1.19.1 (23 de septiembre de 2026) | Sí |
 | `lifecycle-runtime-ktx` | 2.6.1 | 2.11.0 (17 de junio de 2026) | Sí |
 | `activity-compose` | 1.8.0 | 1.13.0 (11 de marzo de 2026) | Sí |
-| `androidx.test.ext:junit` y `espresso-core` | 1.1.5 y 3.5.1 | Últimas estables por verificar | Probable |
+| `androidx.test.ext:junit` y `espresso-core` | 1.1.5 y 3.5.1 | 1.3.0 y 3.7.0, últimas estables (verificado el 2026-10-11, Spec 31) | No: el catálogo ya usa 1.3.0 y 3.7.0 |
+| `junit` y `kotlinx-coroutines-test` | 4.13.2; `kotlinx-coroutines-test` no estaba | 4.13.2, última de JUnit 4, y 1.11.0, última estable (verificado el 2026-10-11, Spec 31) | No |
 | `kotlinx-coroutines-core` y `-android` | 1.9.0, transitivas | 1.11.0, declaradas el 2026-10-11 (Spec 20): `kotlinx-coroutines-test` 1.11.0 no funciona con el `core` 1.9.0 que heredaba la app | Le toca a la Spec 20 |
 | `kotlinx-serialization-core` | 1.7.3, transitiva vía `lifecycle` 2.11.0 | 1.11.0 `runtimeOnly`, declarada el 2026-10-11 (Spec 20): `room3-testing` 3.0.3 exige 1.8.1 o más | Le toca a la Spec 20 |
 | Versiones | Todas en `gradle/libs.versions.toml` | Solo en `libs.versions.toml` | No |
@@ -72,7 +73,7 @@ Qué le toca a cada spec:
 | ID | Requisito |
 | --- | --- |
 | S03-R07 | `namespace` y `applicationId` son `com.juancholopes.weightrack`. |
-| S03-R08 | El paquete de código coincide con el `namespace` elegido, incluidas las pruebas de `test` y `androidTest`. |
+| S03-R08 | El paquete de código coincide con el `namespace` elegido, incluidas las pruebas de `test`, `androidTest` y `testFixtures` (Spec 31). |
 | S03-R09 | La estructura de paquetes sigue el esqueleto de abajo. Esta spec lo documenta. Los paquetes se crean cuando la primera clase los necesita, no vacíos. |
 | S03-R10 | Se elimina el composable de plantilla `Greeting` y su preview. `MainActivity` muestra un contenido mínimo sin textos escritos en el código. |
 | S03-R11 | Todo texto visible para el usuario vive en `res/values/strings.xml`. |
@@ -99,12 +100,14 @@ com/juancholopes/weightrack/
     history/                F04: solo ui/
 ```
 
+Las pruebas usan los mismos paquetes en tres source sets (Spec 31): `src/test` (JVM), `src/androidTest` (dispositivo) y `src/testFixtures`, que comparten los dos anteriores. Los fakes y los contratos de los repositorios viven en `src/testFixtures`, paquete `testing` (S31-R04), y `MainDispatcherRule` en `src/test`, paquete `testing` (S31-R10).
+
 ### Build, entorno y repositorio
 
 | ID | Requisito |
 | --- | --- |
 | S03-R13 | El manifiesto fusionado no declara el permiso `INTERNET` ni otro permiso de red (S01-R05). |
-| S03-R14 | Un solo comando compila y ejecuta las pruebas desde un clon limpio: `./gradlew assembleDebug test`. Las pruebas de base de datos de la Spec 20 son instrumentadas y corren aparte, en un dispositivo, con `./gradlew connectedAndroidTest` (enmienda del 2026-10-10). |
+| S03-R14 | Sin dispositivo, `./gradlew assembleDebug test` compila y ejecuta las pruebas JVM desde un clon limpio. Con un teléfono o emulador conectado, el comando completo suma las pruebas instrumentadas: `./gradlew assembleDebug test connectedDebugAndroidTest`. Es el comando de la definición de hecho (S31-R23, S31-R24; enmiendas del 2026-10-10 y del 2026-10-11). |
 | S03-R15 | El JDK del build se resuelve con el toolchain de Gradle (`gradle/gradle-daemon-jvm.properties`), en una versión que cumpla el mínimo de AGP. El nivel de bytecode (Java 11 hoy) se mantiene salvo que el plan justifique cambiarlo. |
 | S03-R16 | `.gitignore` excluye `.kotlin/`, `.gradle`, `build/` y `local.properties`. Ningún archivo generado queda versionado. |
 | S03-R18 | El manifiesto mantiene `android:allowBackup="true"` y las referencias a `@xml/backup_rules` y `@xml/data_extraction_rules`, con el contenido por defecto que generó Android Studio. |
@@ -134,7 +137,7 @@ com/juancholopes/weightrack/
 | S03-A06 | No quedan `Greeting` ni textos visibles escritos en el código. | S03-R10, R11 | `grep -rn "Greeting\|Hello" app/src/main/` sin resultados |
 | S03-A07 | `MainActivity` llama a `enableEdgeToEdge()`. | S03-R12 | Revisión de `MainActivity.kt` |
 | S03-A08 | El manifiesto fusionado no contiene `android.permission.INTERNET`. | S03-R13 | `./gradlew :app:processDebugMainManifest` y `grep INTERNET app/build/intermediates/merged_manifest/debug/processDebugMainManifest/AndroidManifest.xml` sin resultados |
-| S03-A09 | Build y pruebas pasan desde un clon limpio. | S03-R14, R15 | `git clone <repo> /ruta/limpia && cd /ruta/limpia && ./gradlew assembleDebug test`. Mientras el repositorio no tenga commits, se copian a una carpeta nueva todos los archivos no ignorados y se ejecuta el mismo comando allí |
+| S03-A09 | Build y pruebas pasan desde un clon limpio. | S03-R14, R15 | `git clone <repo> /ruta/limpia && cd /ruta/limpia && ./gradlew assembleDebug test` y, con un dispositivo, `./gradlew assembleDebug test connectedDebugAndroidTest`. Si hay cambios sin commit, se copian a una carpeta nueva todos los archivos no ignorados y se ejecutan los mismos comandos allí |
 | S03-A10 | Tras un build, Git no muestra archivos generados sin seguimiento. | S03-R16 | `./gradlew assembleDebug && git status --short` sin `.kotlin/`, `build/` ni `.gradle/` |
 | S03-A11 | La app arranca sin cierres en la API mínima (26) y en la API 37. | S03-R07 a R12 | `./gradlew installDebug` en un emulador o teléfono físico por cada API y prueba de que la actividad queda abierta sin cierres (`adb logcat -b crash` vacío). Si no hay dispositivo para una API, se anota como pendiente y se comprueba en cuanto lo haya |
 | S03-A12 | Los paquetes de código están en inglés y no hay textos visibles fuera de `strings.xml`. | S03-R17 | `find app/src -type d` bajo `com/juancholopes/weightrack` y revisión de nombres |
@@ -149,6 +152,7 @@ com/juancholopes/weightrack/
 - [x] **Ajustes por la Spec 20.** Aprobado el 2026-10-10: KSP y el plugin `androidx.room3` se aplican en `:app` (S03-R06, S03-A04), el esqueleto suma `data/`, `AppContainer` y `WeightrackApplication`, y las pruebas de base de datos corren aparte con `./gradlew connectedAndroidTest` (S03-R14).
 - [x] **Respaldo automático de Android.** Decidido el 2026-10-10: `allowBackup="true"` se mantiene con las reglas por defecto. El respaldo del sistema a la cuenta de Google del usuario se acepta como excepción a S01-R05, que se refiere a funciones de la app (S03-R18).
 - [x] **Ajustes por la Spec 30.** Aprobado el 2026-10-11: el esqueleto de paquetes sigue el árbol de ADR-30-03, con los nombres de feature, el `ui/` raíz del shell y la composición de cada pantalla (S30-R05, S30-R06 y S30-R12).
+- [x] **Ajustes por la Spec 31.** Aprobado el 2026-10-11: S03-R14 y S03-A09 usan el comando sin dispositivo y el comando completo con `connectedDebugAndroidTest` (S31-R23, S31-R24); S03-R08 y el esqueleto incluyen `src/testFixtures`; las versiones de las librerías de prueba quedan verificadas en "Estado actual".
 
 ## Fuentes
 
