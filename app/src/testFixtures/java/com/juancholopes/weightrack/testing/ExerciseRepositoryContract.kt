@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -246,6 +247,36 @@ abstract class ExerciseRepositoryContract : RepositoryContract() {
         exercises.unarchive(42)
 
         assertEquals(listOf(bench), exercises.observeActiveCatalog().first())
+    }
+
+    // SF01-A02 / SF01-R11, S20-A41 / S20-R48
+    @Test
+    fun observeHasSets_followsTheSetsOfTheExercise() = runTest {
+        val bench = createExercise("Press de banca")
+        val squat = createExercise("Sentadilla", Equipment.BARBELL, muscle(Muscle.QUADRICEPS))
+        assertFalse(exercises.observeHasSets(bench.id).first())
+
+        val session = createSession(oct10, set(bench.id, order = 1))
+
+        assertTrue(exercises.observeHasSets(bench.id).first())
+        assertFalse(exercises.observeHasSets(squat.id).first())
+
+        sessions.deleteSet(sessions.setsOfSession(session.id).single().id)
+
+        assertFalse(exercises.observeHasSets(bench.id).first())
+    }
+
+    // SF01-A02 / SF01-R11, S20-R48: the subscription starts before the write, so the new value is a second emission
+    @Test
+    fun observeHasSets_emitsAgainAfterASetIsAdded() = runTest {
+        val bench = createExercise("Press de banca")
+        val hasSets = async(start = CoroutineStart.UNDISPATCHED) {
+            exercises.observeHasSets(bench.id).first { it }
+        }
+
+        createSession(oct10, set(bench.id, order = 1))
+
+        assertTrue(hasSets.await())
     }
 
     // S20-A33: the subscription starts before the write, so the new value is a second emission

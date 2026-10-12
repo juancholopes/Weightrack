@@ -36,6 +36,10 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercise_muscle WHERE exercise_id = :exerciseId")
     fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscleEntity>>
 
+    /** S20-R48: has the exercise at least one set? Uses `index_exercise_set_exercise_id_session_id`. */
+    @Query("SELECT EXISTS(SELECT 1 FROM exercise_set WHERE exercise_id = :exerciseId)")
+    fun observeHasSets(exerciseId: Long): Flow<Boolean>
+
     /** S20-R40: read inside the delete-or-archive transaction. */
     @Query("SELECT * FROM exercise WHERE id = :id")
     suspend fun findById(id: Long): ExerciseEntity?

@@ -33,6 +33,8 @@ class RoomExerciseRepository(
     override fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscle>> =
         dao.observeMuscles(exerciseId).map { list -> list.map { it.toDomain() } }
 
+    override fun observeHasSets(exerciseId: Long): Flow<Boolean> = dao.observeHasSets(exerciseId)
+
     override suspend fun create(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult =
         rejectingNameCollision(exercise, excludingId = null) {
             dao.insertWithMuscles(exercise.toEntity(), muscles.map { it.toEntity() })

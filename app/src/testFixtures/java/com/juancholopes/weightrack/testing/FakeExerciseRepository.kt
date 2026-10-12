@@ -14,6 +14,7 @@ import com.juancholopes.weightrack.feature.catalog.domain.deleteExercise
 import com.juancholopes.weightrack.feature.catalog.domain.nameKey
 import com.juancholopes.weightrack.feature.catalog.domain.normalizeExerciseName
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * In-memory [ExerciseRepository] for JVM tests (Spec 31, S31-R05). It honors the same contract as
@@ -21,6 +22,20 @@ import kotlinx.coroutines.flow.Flow
  * functions of Spec 10.
  */
 class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore()) : ExerciseRepository {
+
+    private val nextWriteFailure = AtomicReference<Exception?>(null)
+
+    /**
+     * Makes the next write (`create`, `update`, `delete` or `unarchive`) throw [error] without writing
+     * anything, as an unexpected database failure would (S31-R08, Spec F01 SF01-R16). Later writes work.
+     */
+    fun failNextWrite(error: Exception = IllegalStateException("Simulated write failure")) {
+        nextWriteFailure.set(error)
+    }
+
+    private fun throwIfWriteFails() {
+        nextWriteFailure.getAndSet(null)?.let { throw it }
+    }
 
     override fun observeActiveCatalog(muscle: Muscle?, equipment: Equipment?): Flow<List<Exercise>> =
         store.observe { activeCatalog(it.exercises, it.muscles, muscle, equipment) }
@@ -34,8 +49,13 @@ class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore())
     override fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscle>> =
         store.observe { tables -> tables.muscles.filter { it.exerciseId == exerciseId } }
 
-    override suspend fun create(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult =
-        store.write { tables ->
+    /** S20-R48. */
+    override fun observeHasSets(exerciseId: Long): Flow<Boolean> =
+        store.observe { tables -> tables.sets.any { it.exerciseId == exerciseId } }
+
+    override suspend fun create(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult {
+        throwIfWriteFails()
+        return store.write { tables ->
             val taken = tables.nameTakenError(exercise.name, excludingId = null)
             if (taken != null) return@write tables to ExerciseWriteResult.Rejected(taken)
             val id = tables.lastExerciseId + 1
@@ -46,9 +66,11 @@ class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore())
             )
             next to ExerciseWriteResult.Saved(id)
         }
+    }
 
-    override suspend fun update(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult =
-        store.write { tables ->
+    override suspend fun update(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult {
+        throwIfWriteFails()
+        return store.write { tables ->
             val taken = tables.nameTakenError(exercise.name, excludingId = exercise.id)
             if (taken != null) return@write tables to ExerciseWriteResult.Rejected(taken)
             check(tables.exercises.any { it.id == exercise.id }) { "Exercise ${exercise.id} does not exist" }
@@ -59,10 +81,12 @@ class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore())
             )
             next to ExerciseWriteResult.Saved(exercise.id)
         }
+    }
 
     /** S20-R40: decides with the domain and applies the result in one change. */
-    override suspend fun delete(exerciseId: Long): ExerciseDeletion =
-        store.write { tables ->
+    override suspend fun delete(exerciseId: Long): ExerciseDeletion {
+        throwIfWriteFails()
+        return store.write { tables ->
             val exercise = checkNotNull(tables.exercises.firstOrNull { it.id == exerciseId }) {
                 "Exercise $exerciseId does not exist"
             }
@@ -82,8 +106,10 @@ class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore())
             }
             next to deletion
         }
+    }
 
     override suspend fun unarchive(exerciseId: Long) {
+        throwIfWriteFails()
         store.write { tables ->
             tables.copy(
                 exercises = tables.exercises.map { if (it.id == exerciseId) it.copy(archived = false) else it },

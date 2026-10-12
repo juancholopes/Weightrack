@@ -15,7 +15,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
@@ -232,5 +234,23 @@ class ExerciseDaoTest {
         assertEquals(1, dao.countSetsOfExercise(id))
         assertEquals(id, dao.findByNormalizedName("press de banca")?.id)
         assertNull(dao.findByNormalizedName("press"))
+    }
+
+    // SF01-A02 / SF01-R11, S20-A41 / S20-R48
+    @Test
+    fun observeHasSets_followsTheSetsOfTheExercise() = runTest {
+        val bench = insert("Press de banca", Equipment.BARBELL, false, muscle(Muscle.CHEST))
+        val squat = insert("Sentadilla", Equipment.BARBELL, false, muscle(Muscle.QUADRICEPS))
+        assertFalse(dao.observeHasSets(bench).first())
+
+        addSetFor(bench)
+
+        assertTrue(dao.observeHasSets(bench).first())
+        assertFalse(dao.observeHasSets(squat).first())
+
+        val setId = db.rawRows("SELECT id FROM exercise_set WHERE exercise_id = $bench").single()["id"] as Long
+        db.sessionDao().deleteSet(setId)
+
+        assertFalse(dao.observeHasSets(bench).first())
     }
 }

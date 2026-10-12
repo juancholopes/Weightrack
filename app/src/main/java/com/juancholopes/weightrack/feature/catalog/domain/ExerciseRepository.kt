@@ -11,6 +11,12 @@ interface ExerciseRepository {
     fun observeArchived(): Flow<List<Exercise>>
     fun observeExercise(id: Long): Flow<Exercise?>
     fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscle>>
+
+    /**
+     * Whether at least one set references the exercise, updated when its sets change (S20-R48, Spec F01
+     * SF01-R11). The editor uses it to offer archiving or deleting; the final decision stays in [delete].
+     */
+    fun observeHasSets(exerciseId: Long): Flow<Boolean>
     suspend fun create(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult
     suspend fun update(exercise: Exercise, muscles: List<ExerciseMuscle>): ExerciseWriteResult
     suspend fun delete(exerciseId: Long): ExerciseDeletion
