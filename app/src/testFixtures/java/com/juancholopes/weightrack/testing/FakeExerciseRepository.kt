@@ -49,6 +49,10 @@ class FakeExerciseRepository(private val store: InMemoryStore = InMemoryStore())
     override fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscle>> =
         store.observe { tables -> tables.muscles.filter { it.exerciseId == exerciseId } }
 
+    /** SF02-R18. */
+    override fun observeAllMuscles(): Flow<List<ExerciseMuscle>> =
+        store.observe { it.muscles }
+
     /** S20-R48. */
     override fun observeHasSets(exerciseId: Long): Flow<Boolean> =
         store.observe { tables -> tables.sets.any { it.exerciseId == exerciseId } }

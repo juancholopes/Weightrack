@@ -253,4 +253,24 @@ class ExerciseDaoTest {
 
         assertFalse(dao.observeHasSets(bench).first())
     }
+
+    // SF02-A03 / SF02-R18, D2: `SELECT * FROM exercise_muscle` returns the rows of every exercise
+    @Test
+    fun observeAllMuscles_returnsTheMuscleRowsOfEveryExercise() = runTest {
+        assertEquals(emptyList<ExerciseMuscleEntity>(), dao.observeAllMuscles().first())
+        val bench = insert("Press de banca", Equipment.BARBELL, false, muscle(Muscle.CHEST), muscle(Muscle.TRICEPS, isPrimary = false))
+        val squat = insert("Sentadilla", Equipment.BARBELL, true, muscle(Muscle.QUADRICEPS))
+
+        val all = dao.observeAllMuscles().first()
+
+        assertEquals(
+            setOf(
+                ExerciseMuscleEntity(bench, Muscle.CHEST, true),
+                ExerciseMuscleEntity(bench, Muscle.TRICEPS, false),
+                ExerciseMuscleEntity(squat, Muscle.QUADRICEPS, true),
+            ),
+            all.toSet(),
+        )
+        assertEquals(3, all.size)
+    }
 }

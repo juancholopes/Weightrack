@@ -13,6 +13,12 @@ interface SessionRepository {
     fun observeSessionSets(sessionId: Long): Flow<List<Pair<ExerciseSet, Exercise>>>
     fun observeLastPerformance(exerciseId: Long, before: WorkoutSession? = null): Flow<LastPerformance?>
     fun observeEvolution(exerciseId: Long): Flow<ExerciseEvolution>
+
+    /**
+     * One [LatestSessionPeak] per exercise with sets, in a single read for all the home cards (S20-R49,
+     * Spec F02 SF02-R17). The order of the list is not part of the contract.
+     */
+    fun observeLatestSessionPeaks(): Flow<List<LatestSessionPeak>>
     suspend fun setsOfSession(sessionId: Long): List<ExerciseSet>
     suspend fun createSession(session: WorkoutSession, sets: List<ExerciseSet> = emptyList()): Long
     suspend fun updateSession(session: WorkoutSession)

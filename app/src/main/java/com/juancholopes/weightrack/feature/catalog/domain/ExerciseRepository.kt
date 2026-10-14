@@ -13,6 +13,12 @@ interface ExerciseRepository {
     fun observeMuscles(exerciseId: Long): Flow<List<ExerciseMuscle>>
 
     /**
+     * The muscles of every exercise, archived or not, in one read for the subtitle of the home cards
+     * (Spec F02 SF02-R18, D2). The order of the list is not part of the contract.
+     */
+    fun observeAllMuscles(): Flow<List<ExerciseMuscle>>
+
+    /**
      * Whether at least one set references the exercise, updated when its sets change (S20-R48, Spec F01
      * SF01-R11). The editor uses it to offer archiving or deleting; the final decision stays in [delete].
      */

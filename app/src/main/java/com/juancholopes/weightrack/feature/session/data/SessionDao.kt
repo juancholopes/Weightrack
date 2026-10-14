@@ -49,6 +49,29 @@ interface SessionDao {
     )
     fun observeEvolution(exerciseId: Long): Flow<List<SetWithSessionRow>>
 
+    /**
+     * S20-R49, S10-R34: for each exercise with sets, its most recent session (date, then `id`, as in S10-R28)
+     * and the heaviest set it has there. A single query for all the cards; no window functions, so it does
+     * not depend on the SQLite version. The `ORDER BY ... LIMIT 1` subquery is what breaks same-day ties by `id`.
+     */
+    @Query(
+        """
+        SELECT s.exercise_id AS exercise_id, ws.id AS session_id, ws.date AS date,
+               MAX(s.weight_grams) AS heaviest_weight_grams
+        FROM exercise_set s
+        JOIN workout_session ws ON ws.id = s.session_id
+        WHERE ws.id = (
+            SELECT s2.session_id
+            FROM exercise_set s2
+            JOIN workout_session ws2 ON ws2.id = s2.session_id
+            WHERE s2.exercise_id = s.exercise_id
+            ORDER BY ws2.date DESC, ws2.id DESC
+            LIMIT 1)
+        GROUP BY s.exercise_id, ws.id
+        """,
+    )
+    fun observeLatestSessionPeaks(): Flow<List<LatestSessionPeakRow>>
+
     /** S20-R31. */
     @Query("SELECT * FROM workout_session ORDER BY date DESC, id DESC")
     fun observeHistory(): Flow<List<WorkoutSessionEntity>>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "history": a clock with a return arrow, drawn for Weightrack with strokes (S41-R21). Placeholder until the owner picks the final icon; it only shows once F04 provides the history screen. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#00000000"
+      android:strokeColor="@android:color/white"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M12,7.5V12l3,2"/>
+  <path
+      android:fillColor="#00000000"
+      android:strokeColor="@android:color/white"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M4.5,12A7.5,7.5 0 1 0 6.7,6.7"/>
+  <path
+      android:fillColor="#00000000"
+      android:strokeColor="@android:color/white"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M4,3.5V7.5H8"/>
+</vector>

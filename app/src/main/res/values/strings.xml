@@ -3,12 +3,276 @@
     <!-- Launcher label; src/debug overrides it with "Weightrack Debug" (Spec F00, D1). -->
     <string name="app_label">Weightrack</string>
 
-    <!-- Temporary start screen of F00; F02 removes it with StartScreen.kt. -->
-    <string name="start_message">Pronto registrarás aquí tus series.</string>
-    <string name="start_create_exercise">Crear ejercicio</string>
-    <string name="start_open_archived">Archivados</string>
-    <plurals name="start_active_exercises">
-        <item quantity="one">%d ejercicio activo</item>
-        <item quantity="other">%d ejercicios activos</item>
+    <!-- Exercise catalog (F01). Texts follow Spec 40 "Textos clave propuestos" and Spec 42 S42-P03/P04. -->
+
+    <!-- Equipment labels (Spec 10) -->
+    <string name="catalog_equipment_machine">Máquina</string>
+    <string name="catalog_equipment_cable">Polea</string>
+    <string name="catalog_equipment_dumbbell">Mancuerna</string>
+    <string name="catalog_equipment_barbell">Barra</string>
+    <string name="catalog_equipment_bodyweight">Peso corporal</string>
+
+    <!-- Muscle labels (Spec 10) -->
+    <string name="catalog_muscle_chest">Pecho</string>
+    <string name="catalog_muscle_upper_back">Espalda alta</string>
+    <string name="catalog_muscle_lats">Dorsales</string>
+    <string name="catalog_muscle_lower_back">Espalda baja</string>
+    <string name="catalog_muscle_shoulders">Hombros</string>
+    <string name="catalog_muscle_biceps">Bíceps</string>
+    <string name="catalog_muscle_triceps">Tríceps</string>
+    <string name="catalog_muscle_forearms">Antebrazos</string>
+    <string name="catalog_muscle_abs">Abdomen</string>
+    <string name="catalog_muscle_quadriceps">Cuádriceps</string>
+    <string name="catalog_muscle_hamstrings">Isquiotibiales</string>
+    <string name="catalog_muscle_glutes">Glúteos</string>
+    <string name="catalog_muscle_calves">Pantorrillas</string>
+    <string name="catalog_muscle_adductors_abductors">Aductores/abductores</string>
+
+    <!-- One message per ExerciseError, shown next to its field -->
+    <string name="catalog_error_name_blank">Escribe un nombre para el ejercicio.</string>
+    <string name="catalog_error_name_too_long">El nombre es muy largo. Usa 60 caracteres o menos.</string>
+    <string name="catalog_error_name_taken">Ya tienes un ejercicio con ese nombre. Usa otro.</string>
+    <string name="catalog_error_name_taken_by_archived">Ese nombre lo usa un ejercicio archivado. Usa otro nombre.</string>
+    <string name="catalog_error_equipment_missing">Elige el equipo del ejercicio.</string>
+    <string name="catalog_error_muscles_missing">Elige al menos un músculo.</string>
+    <string name="catalog_error_primary_muscle_missing">Marca al menos un músculo como principal.</string>
+    <string name="catalog_error_muscle_repeated">Ese músculo ya está elegido. Quita el repetido.</string>
+    <string name="catalog_error_notes_too_long">La nota es muy larga. Usa 500 caracteres o menos.</string>
+
+    <!-- Unexpected failure (Spec 40 "Varios") -->
+    <string name="catalog_error_generic">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
+
+    <!-- Notices shown by the home screen after the editor archives or deletes (S42-P01) -->
+    <string name="catalog_notice_archived">«%1$s» archivado</string>
+    <string name="catalog_notice_archived_has_sets">«%1$s» tiene series, así que se archivó</string>
+    <string name="catalog_notice_deleted">«%1$s» eliminado</string>
+    <string name="catalog_notice_undo">Deshacer</string>
+
+    <!-- Exercise editor (S42-P03) -->
+    <string name="editor_title_new">Nuevo ejercicio</string>
+    <string name="editor_title_edit">Editar ejercicio</string>
+    <string name="editor_close_description">Cerrar</string>
+    <string name="editor_name_label">Nombre</string>
+    <string name="editor_equipment_label">Equipo</string>
+    <string name="editor_muscles_label">Músculos</string>
+    <string name="editor_primary_label">Principal</string>
+    <string name="editor_primary_switch_description">Marcar %1$s como principal</string>
+    <string name="editor_notes_label">Nota fija (opcional)</string>
+    <string name="editor_save">Guardar ejercicio</string>
+    <string name="editor_archive">Archivar ejercicio</string>
+    <string name="editor_delete">Eliminar ejercicio</string>
+
+    <!-- Delete confirmation (S40-F06) -->
+    <string name="editor_delete_dialog_title">¿Eliminar «%1$s»?</string>
+    <string name="editor_delete_dialog_text">No tiene series, así que se borra para siempre.</string>
+    <string name="editor_delete_dialog_confirm">Eliminar ejercicio</string>
+    <string name="editor_delete_dialog_dismiss">Conservar</string>
+
+    <!-- Discard confirmation (S40-F21) -->
+    <string name="editor_discard_dialog_title">¿Descartar los cambios?</string>
+    <string name="editor_discard_dialog_text">Lo que cambiaste no se ha guardado.</string>
+    <string name="editor_discard_dialog_confirm">Descartar</string>
+    <string name="editor_discard_dialog_dismiss">Seguir editando</string>
+
+    <!-- Name held by an archived exercise (S40-F04, D9) -->
+    <string name="editor_archived_dialog_title">«%1$s» está archivado</string>
+    <string name="editor_archived_dialog_text">Puedes desarchivarlo con todo su historial o usar otro nombre.</string>
+    <string name="editor_archived_dialog_confirm">Desarchivar</string>
+    <string name="editor_archived_dialog_dismiss">Usar otro nombre</string>
+
+    <!-- Archived exercises (S42-P04) -->
+    <string name="archived_title">Archivados</string>
+    <string name="archived_back_description">Volver</string>
+    <string name="archived_unarchive">Desarchivar</string>
+    <string name="archived_unarchive_description">Desarchivar «%1$s»</string>
+    <string name="archived_notice_returned">«%1$s» volvió al catálogo</string>
+    <string name="archived_empty">No tienes ejercicios archivados. Los que archives aparecerán aquí.</string>
+    <string name="archived_error_generic">No se pudo desarchivar. Inténtalo de nuevo.</string>
+
+    <!-- Session feature (F02). Texts follow Spec 40 "Textos clave propuestos" and Spec 42 S42-P01, S42-P02, S42-P05. -->
+
+    <!-- Shared by the home and the logger: "Hoy · dom 11 oct" -->
+    <string name="session_today_header">Hoy · %1$s</string>
+    <string name="session_error_generic">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
+
+    <!-- One message per ExerciseSetError (S30-R24) -->
+    <string name="session_error_weight_negative">El peso no puede ser negativo. Usa 0 o más.</string>
+    <string name="session_error_weight_not_multiple">El peso va de 0,25 en 0,25 kg. Prueba con 62,25 o 62,5 kg.</string>
+    <string name="session_error_weight_too_high">El peso no puede pasar de 1000 kg.</string>
+    <string name="session_error_reps_out_of_range">Usa entre 1 y 999 repeticiones.</string>
+    <string name="session_error_exercise_archived">Este ejercicio está archivado. Desarchívalo en Archivados para registrar series.</string>
+
+    <!-- One message per WorkoutSessionError -->
+    <string name="session_error_date_in_future">La fecha no puede ser posterior a hoy.</string>
+    <string name="session_error_notes_too_long">La nota es muy larga. Usa 500 caracteres o menos.</string>
+
+    <!-- Typed value that is not a number (Spec 42, "Errores en línea") -->
+    <string name="session_error_not_a_weight">Escribe un número, por ejemplo 62,5.</string>
+    <string name="session_error_not_reps">Escribe un número entero, por ejemplo 10.</string>
+
+    <!-- "¿Descartar los cambios?" of the logger and the session form (S40-F21) -->
+    <string name="session_discard_dialog_title">¿Descartar los cambios?</string>
+    <string name="session_discard_dialog_text">Lo que cambiaste no se ha guardado.</string>
+    <string name="session_discard_dialog_confirm">Descartar</string>
+    <string name="session_discard_dialog_dismiss">Seguir editando</string>
+
+    <!-- Home (S42-P01) -->
+    <string name="home_tab_today">Hoy</string>
+    <string name="home_tab_exercises">Ejercicios</string>
+    <string name="home_create_exercise">Crear ejercicio</string>
+    <string name="home_menu_description">Más opciones</string>
+    <string name="home_menu_archived">Archivados</string>
+    <string name="home_menu_start_another_session">Empezar otra sesión</string>
+    <string name="home_history">Historial</string>
+    <string name="home_edit_session">Editar sesión</string>
+    <string name="home_today_empty">Aún no tienes series hoy. Toca un ejercicio para empezar.</string>
+    <string name="home_last_session_header">De tu última sesión · %1$s</string>
+    <string name="home_see_all_exercises">Ver todos los ejercicios</string>
+    <string name="home_catalog_empty">Aún no tienes ejercicios. Crea uno para registrar su primera serie.</string>
+    <string name="home_search_label">Buscar ejercicio</string>
+    <string name="home_search_clear_description">Borrar búsqueda</string>
+    <string name="home_filter_equipment">Equipo</string>
+    <string name="home_filter_muscle">Músculo</string>
+    <string name="home_filter_all">Todos</string>
+    <string name="home_no_results">Ningún ejercicio coincide con «%1$s».</string>
+    <string name="home_no_results_filters">Ningún ejercicio coincide con los filtros.</string>
+    <string name="home_create_named">Crear «%1$s»</string>
+    <string name="home_clear_search">Limpiar búsqueda</string>
+    <string name="home_clear_filters">Quitar filtros</string>
+
+    <!-- Exercise card (S42-P01 "Tarjeta") -->
+    <plurals name="card_sets_today">
+        <item quantity="one">%d serie hoy</item>
+        <item quantity="other">%d series hoy</item>
     </plurals>
+    <string name="card_no_sets">Sin series</string>
+    <string name="card_archived">Archivado</string>
+    <string name="card_subtitle">%1$s · %2$s</string>
+    <string name="card_menu_description">Más opciones de «%1$s»</string>
+    <string name="card_action_log_set">Registrar una serie</string>
+    <string name="card_action_edit_exercise">Editar ejercicio</string>
+    <string name="card_action_view_stats">Ver estadísticas</string>
+    <!-- Reading of a card for TalkBack: one node, "name. Muscle, equipment. Last time ..." -->
+    <string name="card_spoken_base">%1$s. %2$s.</string>
+    <string name="card_spoken_subtitle">%1$s, %2$s</string>
+    <string name="card_spoken_last_time">Última vez %1$s, %2$s.</string>
+    <string name="card_spoken_peak_today">Peso más alto: %1$s.</string>
+    <string name="card_spoken_archived">Archivado.</string>
+
+    <!-- Set logger (S42-P02) -->
+    <string name="logger_back_description">Volver</string>
+    <string name="logger_edit_exercise">Editar ejercicio</string>
+    <string name="logger_menu_description">Más opciones</string>
+    <string name="logger_view_stats">Ver estadísticas</string>
+    <string name="logger_fixed_note_label">Nota fija</string>
+    <string name="logger_sets_title_today">Hoy</string>
+    <string name="logger_sets_empty">Aún no hay series de este ejercicio en esta sesión.</string>
+    <string name="logger_set_row_description">Serie %1$d: %2$s.</string>
+    <string name="logger_set_row_click_label">Corregir esta serie</string>
+    <string name="logger_saved_announcement">Serie %1$d guardada: %2$s.</string>
+    <string name="logger_weight_label">Peso</string>
+    <string name="logger_weight_label_bodyweight">Peso adicional</string>
+    <string name="logger_reps_label">Repeticiones</string>
+    <string name="logger_weight_unset_hint">Fija el peso</string>
+    <string name="logger_reps_unset_hint">Fija las repeticiones</string>
+    <string name="logger_unset_value">—</string>
+    <string name="logger_value_description">%1$s, %2$s</string>
+    <string name="logger_unset_state">Sin fijar</string>
+    <string name="logger_type_click_label">Escribirlo</string>
+    <string name="logger_weight_decrease">Bajar 0,25 kilogramos</string>
+    <string name="logger_weight_increase">Subir 0,25 kilogramos</string>
+    <string name="logger_reps_decrease">Bajar una repetición</string>
+    <string name="logger_reps_increase">Subir una repetición</string>
+    <string name="logger_save_set">Guardar serie</string>
+    <string name="logger_save_changes">Guardar cambios</string>
+    <string name="logger_correcting">Corrigiendo la serie %1$d</string>
+    <string name="logger_delete_set">Eliminar serie</string>
+    <string name="logger_cancel_correction">Cancelar corrección</string>
+    <string name="logger_archived_notice">Este ejercicio está archivado. Desarchívalo en Archivados para registrar series.</string>
+    <string name="logger_error_weight_missing">Fija el peso para guardar la serie.</string>
+    <string name="logger_error_reps_missing">Fija las repeticiones para guardar la serie.</string>
+    <string name="logger_delete_dialog_title">¿Eliminar esta serie?</string>
+    <string name="logger_delete_dialog_text">%1$s de %2$s. No se puede deshacer.</string>
+    <string name="logger_delete_dialog_confirm">Eliminar serie</string>
+    <string name="logger_delete_dialog_dismiss">Conservar</string>
+    <string name="logger_typing_weight_title">Escribe el peso</string>
+    <string name="logger_typing_reps_title">Escribe las repeticiones</string>
+    <string name="logger_typing_weight_label">Peso en kilogramos</string>
+    <string name="logger_typing_reps_label">Repeticiones</string>
+    <string name="logger_typing_weight_confirm">Fijar peso</string>
+    <string name="logger_typing_reps_confirm">Fijar repeticiones</string>
+    <string name="logger_typing_dismiss">Cancelar</string>
+
+    <!-- Session data form (S42-P05) -->
+    <string name="session_editor_title">Datos de la sesión</string>
+    <string name="session_editor_close_description">Cerrar</string>
+    <string name="session_editor_date_label">Fecha</string>
+    <string name="session_editor_date_description">Fecha de la sesión, %1$s</string>
+    <string name="session_editor_date_click_label">Elegir fecha</string>
+    <string name="session_editor_notes_label">Nota de la sesión (opcional)</string>
+    <string name="session_editor_save">Guardar sesión</string>
+    <string name="session_editor_date_picker_title">Fecha de la sesión</string>
+    <string name="session_editor_date_picker_confirm">Elegir</string>
+    <string name="session_editor_date_picker_dismiss">Cancelar</string>
+
+
+    <!-- Date names for ui/theme/Formats.kt (Spec 41 "Formatos"): Monday first, lowercase, no dots -->
+    <string-array name="format_weekdays_short">
+        <item>lun</item>
+        <item>mar</item>
+        <item>mié</item>
+        <item>jue</item>
+        <item>vie</item>
+        <item>sáb</item>
+        <item>dom</item>
+    </string-array>
+    <string-array name="format_weekdays_long">
+        <item>lunes</item>
+        <item>martes</item>
+        <item>miércoles</item>
+        <item>jueves</item>
+        <item>viernes</item>
+        <item>sábado</item>
+        <item>domingo</item>
+    </string-array>
+    <string-array name="format_months_short">
+        <item>ene</item>
+        <item>feb</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>may</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>sept</item>
+        <item>oct</item>
+        <item>nov</item>
+        <item>dic</item>
+    </string-array>
+    <string-array name="format_months_long">
+        <item>enero</item>
+        <item>febrero</item>
+        <item>marzo</item>
+        <item>abril</item>
+        <item>mayo</item>
+        <item>junio</item>
+        <item>julio</item>
+        <item>agosto</item>
+        <item>septiembre</item>
+        <item>octubre</item>
+        <item>noviembre</item>
+        <item>diciembre</item>
+    </string-array>
+    <string name="format_today">Hoy</string>
+    <string name="format_yesterday">Ayer</string>
+
+    <!-- F03: the "Última vez" section (SF03-R10) -->
+    <!-- "Última vez · jue 8 oct" (S40-F16, S42-P02); the date comes from Formats.kt, so it can be "Hoy" or "Ayer" -->
+    <string name="last_performance_header">Última vez · %1$s</string>
+    <string name="last_performance_first_time">Primera vez con este ejercicio.</string>
+    <string name="last_performance_view_stats">Ver estadísticas</string>
+    <!-- D3: a short text in the section when the read fails; it never blocks the logger -->
+    <string name="last_performance_error">No se pudo cargar la última vez.</string>
+    <!-- Reading for TalkBack, one node: "Última vez, jueves 8 de octubre: 60 kilogramos, 10 repeticiones; ..." (S40-R49) -->
+    <string name="last_performance_spoken">Última vez, %1$s: %2$s</string>
 </resources>

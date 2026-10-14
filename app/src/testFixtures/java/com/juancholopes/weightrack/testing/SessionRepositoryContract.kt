@@ -4,6 +4,7 @@ import com.juancholopes.weightrack.feature.catalog.domain.Equipment
 import com.juancholopes.weightrack.feature.catalog.domain.Exercise
 import com.juancholopes.weightrack.feature.catalog.domain.Muscle
 import com.juancholopes.weightrack.feature.session.domain.ExerciseSet
+import com.juancholopes.weightrack.feature.session.domain.LatestSessionPeak
 import com.juancholopes.weightrack.feature.session.domain.SessionRepository
 import com.juancholopes.weightrack.feature.session.domain.WorkoutSession
 import kotlinx.coroutines.CoroutineStart
@@ -257,6 +258,64 @@ abstract class SessionRepositoryContract : RepositoryContract() {
 
         assertEquals(listOf(50_000, 60_000, 62_500, 65_000), entries.map { it.set.weightGrams })
         assertEquals(listOf(yesterday.date, oct10, oct10, oct10), entries.map { it.date })
+    }
+
+    // SF02-A02 / SF02-R17, S20-A42 / S20-R49, S10-R14: two sessions on the same day, the one with the higher id counts
+    @Test
+    fun observeLatestSessionPeaks_sameDaySessions_returnsTheHigherIdAndItsHeaviestWeight() = runTest {
+        createSession(oct10, set(bench.id, order = 1, weightGrams = 60_000))
+        val latest = createSession(oct10, set(bench.id, order = 1, weightGrams = 62_500))
+
+        val peaks = sessions.observeLatestSessionPeaks().first()
+
+        assertEquals(listOf(LatestSessionPeak(bench.id, latest.id, oct10, 62_500)), peaks)
+    }
+
+    // SF02-A02 / SF02-R17, S20-R49: the heaviest set of the latest session, not its last set nor an older session's
+    @Test
+    fun observeLatestSessionPeaks_usesTheHeaviestSetOfTheLatestSession_perExercise() = runTest {
+        createSession(oct10.minusDays(2), set(bench.id, order = 1, weightGrams = 100_000))
+        val latest = createSession(
+            oct10,
+            set(bench.id, order = 1, weightGrams = 65_000),
+            set(squat.id, order = 2, weightGrams = 80_000),
+            set(bench.id, order = 3, weightGrams = 60_000),
+        )
+
+        val peaks = sessions.observeLatestSessionPeaks().first().sortedBy { it.exerciseId }
+
+        assertEquals(
+            listOf(
+                LatestSessionPeak(bench.id, latest.id, oct10, 65_000),
+                LatestSessionPeak(squat.id, latest.id, oct10, 80_000),
+            ),
+            peaks,
+        )
+    }
+
+    // SF02-A02 / SF02-R17, S20-R49: an exercise without sets has no row, and archived exercises keep theirs
+    @Test
+    fun observeLatestSessionPeaks_skipsExercisesWithoutSets_andIncludesArchivedOnes() = runTest {
+        val session = createSession(oct10, set(bench.id, order = 1, weightGrams = 0))
+        exercises.delete(bench.id) // it has sets, so it is archived
+
+        val peaks = sessions.observeLatestSessionPeaks().first()
+
+        assertEquals(listOf(LatestSessionPeak(bench.id, session.id, oct10, 0)), peaks)
+        assertTrue(peaks.none { it.exerciseId == squat.id })
+    }
+
+    // SF02-R17, S20-R49: the subscription starts before the write, so the new value is a second emission
+    @Test
+    fun observeLatestSessionPeaks_emitsAgainAfterASetIsAdded() = runTest {
+        val session = createSession(oct10, set(bench.id, order = 1, weightGrams = 60_000))
+        val peaks = async(start = CoroutineStart.UNDISPATCHED) {
+            sessions.observeLatestSessionPeaks().first { list -> list.any { it.heaviestWeightGrams == 62_500 } }
+        }
+
+        sessions.addSet(set(bench.id, order = 2, weightGrams = 62_500, sessionId = session.id))
+
+        assertEquals(listOf(LatestSessionPeak(bench.id, session.id, oct10, 62_500)), peaks.await())
     }
 
     // S20-A33: the subscription starts before the write, so the new value is a second emission

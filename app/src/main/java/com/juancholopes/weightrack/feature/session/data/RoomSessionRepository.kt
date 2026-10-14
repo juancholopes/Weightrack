@@ -5,6 +5,7 @@ import com.juancholopes.weightrack.feature.catalog.domain.Exercise
 import com.juancholopes.weightrack.feature.session.domain.ExerciseEvolution
 import com.juancholopes.weightrack.feature.session.domain.ExerciseSet
 import com.juancholopes.weightrack.feature.session.domain.LastPerformance
+import com.juancholopes.weightrack.feature.session.domain.LatestSessionPeak
 import com.juancholopes.weightrack.feature.session.domain.SessionRepository
 import com.juancholopes.weightrack.feature.session.domain.WorkoutSession
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +33,11 @@ class RoomSessionRepository(private val dao: SessionDao) : SessionRepository {
     override fun observeEvolution(exerciseId: Long): Flow<ExerciseEvolution> =
         dao.observeEvolution(exerciseId).map { rows ->
             ExerciseEvolution(rows.map { ExerciseEvolution.Entry(it.session.date, it.set.toDomain()) })
+        }
+
+    override fun observeLatestSessionPeaks(): Flow<List<LatestSessionPeak>> =
+        dao.observeLatestSessionPeaks().map { rows ->
+            rows.map { LatestSessionPeak(it.exerciseId, it.sessionId, it.date, it.heaviestWeightGrams) }
         }
 
     override suspend fun setsOfSession(sessionId: Long): List<ExerciseSet> =

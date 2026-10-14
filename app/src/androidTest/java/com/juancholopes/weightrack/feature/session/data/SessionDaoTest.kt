@@ -294,4 +294,55 @@ class SessionDaoTest {
         val result = withContext(Dispatchers.Default) { withTimeout(5_000) { emissions.await() } }
         assertEquals(listOf(emptyList(), listOf(id)), result.map { list -> list.map { it.id } })
     }
+
+    // SF02-A02 / SF02-R17, S20-A42 / S20-R49, S10-R14: same-day sessions, the higher id and its heaviest set
+    @Test
+    fun latestSessionPeaks_sameDaySessions_returnsHigherIdWithItsHeaviestWeight() = runTest {
+        val bench = newExercise("Press de banca")
+        val squat = newExercise("Sentadilla")
+        val first = newSession()
+        newSet(first, bench, order = 1, grams = 60_000)
+        val second = newSession()
+        newSet(second, bench, order = 1, grams = 62_500)
+
+        val rows = dao.observeLatestSessionPeaks().first()
+
+        assertEquals(listOf(LatestSessionPeakRow(bench, second, oct10, 62_500)), rows)
+        assertTrue(rows.none { it.exerciseId == squat })
+    }
+
+    // SF02-A02 / SF02-R17, S20-R49: per exercise, the latest session by date then id, and its heaviest set
+    @Test
+    fun latestSessionPeaks_pickTheLatestSessionOfEachExercise_andItsHeaviestSet() = runTest {
+        val bench = newExercise("Press de banca")
+        val squat = newExercise("Sentadilla")
+        val older = newSession(oct10.minusDays(3))
+        newSet(older, bench, order = 1, grams = 100_000)
+        val latest = newSession(oct10)
+        newSet(latest, bench, order = 1, grams = 65_000)
+        newSet(latest, squat, order = 2, grams = 80_000)
+        newSet(latest, bench, order = 3, grams = 60_000)
+        val newerId = newSession(oct10.minusDays(1)) // created later but dated earlier: date wins over id
+        newSet(newerId, squat, order = 1, grams = 120_000)
+
+        val rows = dao.observeLatestSessionPeaks().first().sortedBy { it.exerciseId }
+
+        assertEquals(
+            listOf(LatestSessionPeakRow(bench, latest, oct10, 65_000), LatestSessionPeakRow(squat, latest, oct10, 80_000)),
+            rows,
+        )
+    }
+
+    // SF02-A02 / SF02-R17, S20-R49: archived exercises keep their row and a session without sets gives none
+    @Test
+    fun latestSessionPeaks_includeArchivedExercises_andIgnoreSessionsWithoutSets() = runTest {
+        val bench = newExercise("Press de banca", archived = true)
+        val session = newSession(oct10.minusDays(1))
+        newSet(session, bench, order = 1, grams = 0)
+        newSession(oct10)
+
+        val rows = dao.observeLatestSessionPeaks().first()
+
+        assertEquals(listOf(LatestSessionPeakRow(bench, session, oct10.minusDays(1), 0)), rows)
+    }
 }

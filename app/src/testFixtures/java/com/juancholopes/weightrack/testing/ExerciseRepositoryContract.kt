@@ -279,6 +279,49 @@ abstract class ExerciseRepositoryContract : RepositoryContract() {
         assertTrue(hasSets.await())
     }
 
+    // SF02-A03 / SF02-R18, D2: the muscles of every exercise in one read, archived exercises included
+    @Test
+    fun observeAllMuscles_returnsTheMusclesOfAllExercises() = runTest {
+        val bench = createExercise(
+            "Press de banca",
+            Equipment.BARBELL,
+            muscle(Muscle.CHEST),
+            muscle(Muscle.TRICEPS, isPrimary = false),
+        )
+        val squat = archive(createExercise("Sentadilla", Equipment.BARBELL, muscle(Muscle.QUADRICEPS)))
+
+        val all = exercises.observeAllMuscles().first()
+
+        assertEquals(
+            setOf(
+                ExerciseMuscle(bench.id, Muscle.CHEST, isPrimary = true),
+                ExerciseMuscle(bench.id, Muscle.TRICEPS, isPrimary = false),
+                ExerciseMuscle(squat.id, Muscle.QUADRICEPS, isPrimary = true),
+            ),
+            all.toSet(),
+        )
+        assertEquals(3, all.size)
+    }
+
+    // SF02-A03 / SF02-R18: with no exercises there are no muscles
+    @Test
+    fun observeAllMuscles_withoutExercises_isEmpty() = runTest {
+        assertEquals(emptyList<ExerciseMuscle>(), exercises.observeAllMuscles().first())
+    }
+
+    // SF02-A03 / SF02-R18: the subscription starts before the write, so the new value is a second emission
+    @Test
+    fun observeAllMuscles_emitsAgainAfterCreate() = runTest {
+        val muscles = async(start = CoroutineStart.UNDISPATCHED) {
+            exercises.observeAllMuscles().first { it.isNotEmpty() }
+        }
+
+        val result = exercises.create(exercise("Press de banca"), listOf(muscle(Muscle.CHEST)))
+
+        val id = (result as ExerciseWriteResult.Saved).id
+        assertEquals(listOf(ExerciseMuscle(id, Muscle.CHEST, isPrimary = true)), muscles.await())
+    }
+
     // S20-A33: the subscription starts before the write, so the new value is a second emission
     @Test
     fun observeActiveCatalog_emitsAgainAfterCreate() = runTest {

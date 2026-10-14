@@ -17,6 +17,17 @@ data class ExerciseEvolution(val entries: List<Entry>) {
     data class Entry(val date: LocalDate, val set: ExerciseSet)
 }
 
+/**
+ * S20-R49, S10-R34: the most recent session containing an exercise and the heaviest set of that exercise in it.
+ * The home cards show [heaviestWeightGrams] as their number and [date] as their footer (Spec 42, D11).
+ */
+data class LatestSessionPeak(
+    val exerciseId: Long,
+    val sessionId: Long,
+    val date: LocalDate,
+    val heaviestWeightGrams: Int,
+)
+
 /** What deleting a session removes: the session and all its sets (S10-R23). */
 data class SessionDeletion(val session: WorkoutSession, val sets: List<ExerciseSet>)
 
@@ -76,3 +87,23 @@ fun sessionSets(
 /** S10-R23: deleting [session] deletes all its sets; exercises do not change. */
 fun deleteSession(session: WorkoutSession, sets: List<ExerciseSet>): SessionDeletion =
     SessionDeletion(session, sets.filter { it.sessionId == session.id })
+
+/**
+ * SF02-R17, S20-R49: one [LatestSessionPeak] per exercise with sets, the one of its most recent session
+ * (same-day ties go to the higher `id`, S10-R14), sorted by `exerciseId`. An exercise without sets gives no
+ * row. It is the model of `SessionRepository.observeLatestSessionPeaks` for the fake.
+ */
+fun latestSessionPeaks(sessions: List<WorkoutSession>, sets: List<ExerciseSet>): List<LatestSessionPeak> {
+    val sessionsById = sessions.associateBy { it.id }
+    return sets
+        .groupBy { it.exerciseId }
+        .map { (exerciseId, exerciseSets) ->
+            val latest = exerciseSets
+                .map { sessionsById.getValue(it.sessionId) }
+                .distinct()
+                .maxWith(sessionRecency)
+            val heaviest = exerciseSets.filter { it.sessionId == latest.id }.maxOf { it.weightGrams }
+            LatestSessionPeak(exerciseId, latest.id, latest.date, heaviest)
+        }
+        .sortedBy { it.exerciseId }
+}

@@ -127,4 +127,46 @@ class SessionQueriesTest {
         assertEquals(before, lastPerformance(renamed.exercise.id, sessions, sets))
         assertEquals(evolutionBefore, exerciseEvolution(renamed.exercise.id, sessions, sets))
     }
+
+    // SF02-A02 / SF02-R17, S20-R49: the latest session of each exercise and its heaviest set, same-day ties by id
+    @Test
+    fun latestSessionPeaks_giveTheLatestSessionOfEachExerciseAndItsHeaviestWeight() {
+        val peaks = latestSessionPeaks(sessions, sets)
+
+        assertEquals(
+            listOf(
+                LatestSessionPeak(exerciseId = bench.id, sessionId = s4.id, date = oct5, heaviestWeightGrams = 60_000),
+                LatestSessionPeak(exerciseId = squat.id, sessionId = s4.id, date = oct5, heaviestWeightGrams = 80_000),
+            ),
+            peaks,
+        )
+    }
+
+    // SF02-A02 / SF02-R17: the peak is the heaviest set of that session, not the last one saved
+    @Test
+    fun latestSessionPeaks_useTheHeaviestSetOfTheSession_notTheLastOne() {
+        val heavyFirst = listOf(
+            set(20, s3, bench, order = 1, kg = 65),
+            set(21, s3, bench, order = 2, kg = 60),
+            set(22, s1, bench, order = 1, kg = 100),
+        )
+
+        val peak = latestSessionPeaks(sessions, heavyFirst).single()
+
+        assertEquals(LatestSessionPeak(bench.id, s3.id, oct5, 65_000), peak)
+    }
+
+    // SF02-A02 / SF02-R17: an exercise without sets gives no row; with no sets at all, the list is empty
+    @Test
+    fun latestSessionPeaks_withoutSets_isEmpty() {
+        assertEquals(emptyList<LatestSessionPeak>(), latestSessionPeaks(sessions, emptyList()))
+    }
+
+    // SF02-R17, S10-R02: a bodyweight set with no extra weight still counts, with a peak of 0
+    @Test
+    fun latestSessionPeaks_countASetWithZeroWeight() {
+        val peak = latestSessionPeaks(sessions, listOf(set(30, s1, bench, order = 1, kg = 0))).single()
+
+        assertEquals(LatestSessionPeak(bench.id, s1.id, oct1, 0), peak)
+    }
 }
